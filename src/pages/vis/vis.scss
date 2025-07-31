@@ -1,0 +1,31 @@
+.vis_container {
+  width: 100vw;
+  height: 100vh;
+  background-color: red;
+  .vis_videos_wrapper {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    background-color: yellow;
+    gap: 16px;
+    .vis_video_item {
+      background-color: rebeccapurple;
+      min-height: 200px;
+      .video_item_wrapper {
+        position: relative;
+        border-radius: 4px;
+        height: 200px;
+        background-color: lightblue;
+        .video_item {
+          width: 100%;
+          height: 200px;
+          border-radius: 4px;
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 0;
+          z-index: 2;
+        }
+      }
+    }
+  }
+}
