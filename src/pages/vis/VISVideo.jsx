@@ -173,6 +173,65 @@ export default function VISVideo({
     console.log(cameraName.get(), { activeInfo });
   };
 
+  // Switch to the preloaded video and start preloading the next one
+  const switchToNextVideo = (cameraName) => {
+    const buffer = videoBufferRef.current;
+    if (!buffer) return;
+    console.log(videoRefs.current);
+    const currentVideoRef =
+      videoRefs.current[`${cameraName}_${buffer.activeVideoIndex}`];
+    const nextVideoRef =
+      videoRefs.current[`${cameraName}_${buffer.preloadingVideoIndex}`];
+
+    console.log({ currentVideoRef, nextVideoRef });
+    if (!currentVideoRef || !nextVideoRef) return;
+
+    // Ensure the next video is at the correct time (0 seconds) before showing it
+    nextVideoRef.currentTime = 0;
+
+    // Wait for the video to actually seek to the correct frame
+    const switchWhenReady = () => {
+      // Make sure we're at time 0 and video is ready
+      if (nextVideoRef.currentTime === 0 && nextVideoRef.readyState >= 2) {
+        // Now perform the instant switch
+        currentVideoRef.style.display = "none";
+        nextVideoRef.style.display = "block";
+
+        // Start playing the preloaded video immediately
+        if (isPlaying.get()) {
+          nextVideoRef.play().catch(console.error);
+        }
+
+        // Pause the previous video
+        currentVideoRef.pause();
+
+        // Swap the active and preloading indices
+        const oldActiveIndex = buffer.activeVideoIndex;
+        buffer.activeVideoIndex = buffer.preloadingVideoIndex;
+        buffer.preloadingVideoIndex = oldActiveIndex;
+        buffer.currentIndex++;
+        buffer.nextRecordingPreloaded = false;
+
+        console.log(
+          `🔄 Switched ${cameraName}: Now active video ${buffer.activeVideoIndex}, preloading video ${buffer.preloadingVideoIndex}`
+        );
+
+        // Start preloading the next recording in the now-inactive video element
+        const nextRecordingIndex = buffer.currentIndex + 1;
+        if (nextRecordingIndex < buffer.recordings.length) {
+          const nextRecording = buffer.recordings[nextRecordingIndex];
+          setTimeout(() => preloadNextVideo(cameraName, nextRecording), 3000);
+        }
+      } else {
+        // Video not ready yet, wait a bit more
+        setTimeout(switchWhenReady, 16); // ~60fps check
+      }
+    };
+
+    // Start the switching process
+    switchWhenReady();
+  };
+
   useObserve(() => {
     if (CurrentVideo.get()) {
       setTimeout(() => {
@@ -186,12 +245,38 @@ export default function VISVideo({
   }, []);
 
   useObserve(() => {
-    console.log(cameraName.get());
-    console.log(RecordingsData.get());
-    console.log(CurrentTime.get());
-    console.log(CurrentVideo.get());
-    console.log(videoRefs.current);
+    if (isPlaying.get()) {
+      console.log("playing......");
+      const buffer = videoBufferRef.current;
+      if (buffer) {
+        const activeVideoRef =
+          videoRefs.current[`${cameraName.get()}_${buffer.activeVideoIndex}`];
+        if (activeVideoRef && activeVideoRef.src) {
+          console.log(
+            `▶️ Starting playback for ${cameraName.get()}, active video ${
+              buffer.activeVideoIndex
+            }`
+          );
+          activeVideoRef
+            .play()
+            .then(() => {
+              console.log(`✅ Playing ${cameraName.get()}`);
+            })
+            .catch((error) => {
+              console.error(`❌ Failed to play ${cameraName.get()}:`, error);
+            });
+        }
+      }
+    }
   });
+
+  // useObserve(() => {
+  //   console.log(cameraName.get());
+  //   console.log(RecordingsData.get());
+  //   console.log(CurrentTime.get());
+  //   console.log(CurrentVideo.get());
+  //   console.log(videoRefs.current);
+  // });
 
   return (
     <div className="vis_video_item">
@@ -229,15 +314,15 @@ export default function VISVideo({
                   //   }
                 }}
                 onEnded={() => {
-                  console.log(`🏁 ${cameraName}_0 video ended`);
-                  //   const buffer = videoBufferRef.current[cameraName];
-                  //   if (
-                  //     buffer &&
-                  //     buffer.activeVideoIndex === 0 &&
-                  //     buffer.nextRecordingPreloaded
-                  //   ) {
-                  //     switchToNextVideo(cameraName);
-                  //   }
+                  console.log(`🏁 ${cameraName.get()}_0 video ended`);
+                  const buffer = videoBufferRef.current;
+                  if (
+                    buffer &&
+                    buffer.activeVideoIndex === 0 &&
+                    buffer.nextRecordingPreloaded
+                  ) {
+                    switchToNextVideo(cameraName);
+                  }
                 }}
                 onError={(e) => {
                   console.error(

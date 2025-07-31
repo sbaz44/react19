@@ -6,6 +6,8 @@ import {
   useComputed,
   useObservable,
   useObserve,
+  Reactive,
+  Memo,
 } from "@legendapp/state/react";
 import { useEffect } from "react";
 import { useRef } from "react";
@@ -78,9 +80,8 @@ export default function VIS2() {
 
       return { groups, items };
     };
-
     const { groups, items } = transformDataForTimeline(RecordingsData.get());
-    console.log({ groups, items });
+    // console.log({ groups, items });
     const groupsDataSet = new DataSet(groups);
     const itemsDataSet = new DataSet(items);
     const { earliestTime, latestTime } = getTimeRange(RecordingsData.get());
@@ -168,7 +169,58 @@ export default function VIS2() {
     console.log(RecordingsData.get());
   });
 
+  // useObserve(() => {
+  //   console.log(timeline.current, CurrentTime.get());
+  //   if (CurrentTime.get()) {
+  //     if (timeline?.current) {
+  //       try {
+  //         console.log("here", CurrentTime.get());
+  //         timeline.current.setCustomTime(CurrentTime.get(), "playback");
+  //       } catch (error) {
+  //         timeline.current.addCustomTime(CurrentTime.get(), "playback");
+  //         timeline.current.setCustomTimeTitle("Playback Position", "playback");
+  //       }
+
+  //       // updateVideoPlayback(currentTime);
+  //     }
+  //   }
+  // });
+
   const RecordingKeys$ = useComputed(() => Object.keys(RecordingsData.get()));
+
+  const startPlayback = () => {
+    if (isPlaying.get()) return;
+
+    isPlaying.set(true);
+
+    const { earliestTime, latestTime } = getTimeRange(RecordingsData.get());
+    playbackIntervalRef.current = setInterval(() => {
+      CurrentTime.set((prevTime) => {
+        const newTime = new Date(prevTime.getTime() + 1000);
+        if (newTime >= latestTime) {
+          return earliestTime;
+        }
+        return newTime;
+      });
+
+      if (timeline?.current) {
+        try {
+          console.log("here", CurrentTime.get());
+          timeline.current.setCustomTime(CurrentTime.get(), "playback");
+          timeline.current.moveTo(CurrentTime.get(), { animation: true });
+        } catch (error) {
+          timeline.current.moveTo(CurrentTime.get(), { animation: true });
+
+          timeline.current.addCustomTime(CurrentTime.get(), "playback");
+          timeline.current.setCustomTimeTitle("Playback Position", "playback");
+        }
+
+        // updateVideoPlayback(currentTime);
+      }
+    }, 1000);
+  };
+
+  const stopPlayback = () => {};
 
   return (
     <div className="vis_container">
@@ -205,6 +257,23 @@ export default function VIS2() {
           )}
         </Show>
       </div>
+      <Reactive.button
+        onClick={isPlaying.get() ? stopPlayback : startPlayback}
+        $style={() => ({
+          marginRight: "10px",
+          padding: "8px 16px",
+          backgroundColor: isPlaying.get() ? "#dc3545" : "#17a2b8",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+        })}
+      >
+        <Memo>
+          {() => <p>{isPlaying.get() ? "Stop Playback" : "Start Playback"}</p>}
+        </Memo>
+      </Reactive.button>
+      {/* <button onClick={startPlayback}>Start</button> */}
       {/* Timeline */}
       <div
         ref={timelineRef}
@@ -249,7 +318,8 @@ const recordingsData = {
   ],
   "camera 2": [
     {
-      Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-16-37-18.mp4",
+      Path: "/static_server/recorder/assets/splits/1.mp4",
+      // Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-16-37-18.mp4",
       Duration: 64,
       StartTime: "2025-07-31T12:16:37+05:30",
     },
