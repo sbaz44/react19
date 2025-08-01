@@ -4,6 +4,7 @@ import {
   useObservable,
   useObserve,
 } from "@legendapp/state/react";
+import cloneDeep from "lodash.clonedeep";
 import React, { useRef, useEffect } from "react";
 
 export default function VISVideo({
@@ -17,11 +18,34 @@ export default function VISVideo({
   const videoRefs = useRef({});
   const HOST_URL = "http://192.168.1.121:8000";
 
-  const { VideoState, CurrentVideo, downloadedVideos } = useObservable({
-    VideoState: {},
-    downloadedVideos: {},
-    CurrentVideo: null,
-  });
+  const { VideoState, CurrentVideo, downloadedVideos, isSwitching } =
+    useObservable({
+      VideoState: {},
+      downloadedVideos: {},
+      CurrentVideo: null,
+      isSwitching: false,
+    });
+
+  //Fetch video and save as blob, check if blob is present already
+  const fetchVideo = async (url, key) => {
+    let _downloadedVideos = cloneDeep(downloadedVideos.get());
+    if (_downloadedVideos[key]) {
+      console.log(`✅ Video already present for ${url} at index- ${key}`);
+      return _downloadedVideos[key];
+    }
+    console.log(`❌ Fetching new video form ${url} ${key} }:`);
+    try {
+      const response = await fetch(url);
+      let blob = await response.blob();
+      blob = URL.createObjectURL(blob);
+      _downloadedVideos = addOrUpdateObject(_downloadedVideos, key, blob);
+      downloadedVideos.set(_downloadedVideos);
+      console.log({ _downloadedVideos });
+      return blob;
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   // Create alternating video management system
   const initializeVideoSystem = (recordings) => {
@@ -39,13 +63,72 @@ export default function VISVideo({
     };
   };
 
+  // Preload next video in the inactive video element
+  const preloadNextVideo = async (cameraName, nextRecording) => {
+    console.log("preloadNextVideo");
+    if (!nextRecording) return;
+
+    const buffer = videoBufferRef.current;
+    if (!buffer || buffer.isPreloading) return;
+
+    buffer.isPreloading = true;
+    const preloadVideoRef =
+      videoRefs.current[`${cameraName}_${buffer.preloadingVideoIndex}`];
+
+    if (preloadVideoRef) {
+      const nextVideoUrl = `${HOST_URL}${nextRecording.Path}`;
+      console.log(
+        `🔄 Preloading ${cameraName} video ${
+          buffer.preloadingVideoIndex
+        }: ${nextRecording.Path.split("/").pop()}`
+      );
+
+      // Clear any existing video content first
+      preloadVideoRef.src = "";
+      preloadVideoRef.load();
+      preloadVideoRef.style.zIndex = 1;
+
+      //fetch video
+      let blobURL = await fetchVideo(nextVideoUrl, buffer.preloadingVideoIndex);
+      console.log({ blobURL });
+
+      // Set the new source
+      preloadVideoRef.src = blobURL;
+      preloadVideoRef.currentTime = 0;
+
+      const onCanPlay = () => {
+        // Ensure we're at the beginning and the correct frame is loaded
+        preloadVideoRef.currentTime = 0;
+
+        const onSeeked = () => {
+          buffer.nextRecordingPreloaded = true;
+          buffer.isPreloading = false;
+          console.log(
+            `✅ Preloaded ${cameraName} video ${buffer.preloadingVideoIndex} at frame 0`
+          );
+          preloadVideoRef.removeEventListener("seeked", onSeeked);
+        };
+
+        preloadVideoRef.addEventListener("seeked", onSeeked);
+        preloadVideoRef.removeEventListener("canplay", onCanPlay);
+      };
+
+      preloadVideoRef.addEventListener("canplay", onCanPlay);
+      preloadVideoRef.load();
+    }
+  };
+
   const updateVideoPlayback = async (playbackTime = CurrentTime.get()) => {
+    console.log("1. updateVideoPlayback", isSwitching.get());
     let newCurrentVideos = {};
     let newVideoStates = {};
+    let _downloadedVideos = cloneDeep(downloadedVideos.get());
+
     const activeInfo = findActiveRecording(RecordingsData.get(), playbackTime);
-    console.log(activeInfo);
+    // console.log(activeInfo && activeInfo);
     if (activeInfo) {
       const videoUrl = `${HOST_URL}${activeInfo.recording.Path}`;
+      const currentblobURL = _downloadedVideos?.[activeInfo.recordingIndex];
       const currentState = VideoState.get();
       newCurrentVideos = {
         url: videoUrl,
@@ -64,54 +147,38 @@ export default function VISVideo({
       }
 
       const buffer = videoBufferRef.current;
-      console.log({ buffer });
+      // console.log({ buffer });
 
       // Check if we need to switch to a different recording
       if (
         currentState.recordingIndex !== undefined &&
         currentState.recordingIndex !== activeInfo.recordingIndex
       ) {
-        console.log(
-          `📹 ${cameraName.peek()} switching from recording ${
-            currentState.recordingIndex
-          } to ${activeInfo.recordingIndex}`
-        );
+        // console.log(
+        //   `1.1 📹 ${cameraName.peek()} switching from recording ${
+        //     currentState.recordingIndex
+        //   } to ${activeInfo.recordingIndex}`
+        // );
       } else {
+        // console.log(`1.2 Same recording, just sync time and play state`);
         // Same recording, just sync time and play state
-        console.log(
-          "else",
-          videoRefs.current,
-          `${cameraName.get()}_${buffer?.activeVideoIndex || 0}`
-        );
         const activeVideoRef =
           videoRefs.current[
             `${cameraName.get()}_${buffer?.activeVideoIndex || 0}`
           ];
-        console.log({ activeVideoRef });
+        // console.log({ activeVideoRef });
         if (activeVideoRef) {
-          console.log("If video doesn't have a source yet, set it");
+          // console.log("1.3 If video doesn't have a source yet, set it");
           // If video doesn't have a source yet, set it
-          if (!activeVideoRef.src || activeVideoRef.src !== videoUrl) {
-            console.log(
-              `📹 Loading initial video for ${cameraName.get()}: ${videoUrl}`
-            );
-
-            const response = await fetch(videoUrl);
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            console.log(activeInfo.recordingIndex);
-            let _downloadedVideos = { ...downloadedVideos.get() };
-            _downloadedVideos = addOrUpdateObject(
-              _downloadedVideos,
-              [activeInfo.recordingIndex],
-              url
-            );
-            downloadedVideos.set(_downloadedVideos);
-
-            console.log(downloadedVideos.get());
+          if (!activeVideoRef.src || activeVideoRef.src !== currentblobURL) {
+            // console.log(
+            //   `1.4 📹 Loading initial video for ${cameraName.get()}: ${videoUrl}`
+            // );
+            // let url = null;
+            let url = await fetchVideo(videoUrl, activeInfo.recordingIndex);
             activeVideoRef.src = url;
-
             const onLoadedData = () => {
+              // console.log("1.7 onLoadedData");
               activeVideoRef.currentTime = activeInfo.videoTime;
               if (isPlaying.get()) {
                 activeVideoRef.play().catch(console.error);
@@ -122,17 +189,21 @@ export default function VISVideo({
 
             // Start preloading next video if available
             if (activeInfo.nextRecording && !buffer.nextRecordingPreloaded) {
-              console.log("start preloading next video if available");
-              //   setTimeout(
-              //     () => preloadNextVideo(cameraName, activeInfo.nextRecording),
-              //     1000
-              //   );
+              console.log("1.8 Start preloading next video if available");
+              setTimeout(
+                () =>
+                  preloadNextVideo(cameraName.get(), activeInfo.nextRecording),
+                3000
+              );
             }
           } else {
             // Video already loaded, just sync time and play state
             if (
               Math.abs(activeVideoRef.currentTime - activeInfo.videoTime) > 0.5
             ) {
+              // console.log(
+              //   `1.9 Video already loaded, just sync time and play state`
+              // );
               activeVideoRef.currentTime = activeInfo.videoTime;
             }
 
@@ -153,10 +224,15 @@ export default function VISVideo({
         !buffer.nextRecordingPreloaded &&
         !buffer.isPreloading
       ) {
-        console.log("preloadNextVideo");
-        // preloadNextVideo(cameraName, activeInfo.nextRecording);
+        console.log(
+          `1.10 Start preloading next video when near end (within 3 seconds)`,
+          activeInfo
+        );
+        // console.log("preloadNextVideo");
+        preloadNextVideo(cameraName.get(), activeInfo.nextRecording);
       }
     } else {
+      console.log(`Pause all videos if no active recording`);
       newCurrentVideos = null;
       newVideoStates = { currentVideoUrl: null };
 
@@ -169,12 +245,14 @@ export default function VISVideo({
     }
     CurrentVideo.set(newCurrentVideos);
     VideoState.set(newVideoStates);
-    console.log({ newCurrentVideos, newVideoStates });
-    console.log(cameraName.get(), { activeInfo });
+    // console.log({ newCurrentVideos, newVideoStates });
+    // console.log({ _downloadedVideos });
   };
 
   // Switch to the preloaded video and start preloading the next one
   const switchToNextVideo = (cameraName) => {
+    console.log("switchToNextVideo");
+    isSwitching.set(true);
     const buffer = videoBufferRef.current;
     if (!buffer) return;
     console.log(videoRefs.current);
@@ -194,8 +272,11 @@ export default function VISVideo({
       // Make sure we're at time 0 and video is ready
       if (nextVideoRef.currentTime === 0 && nextVideoRef.readyState >= 2) {
         // Now perform the instant switch
-        currentVideoRef.style.display = "none";
-        nextVideoRef.style.display = "block";
+        // currentVideoRef.style.display = "none";
+        // nextVideoRef.style.display = "block";
+
+        currentVideoRef.style.zIndex = 2;
+        nextVideoRef.style.zIndex = 1;
 
         // Start playing the preloaded video immediately
         if (isPlaying.get()) {
@@ -230,19 +311,22 @@ export default function VISVideo({
 
     // Start the switching process
     switchWhenReady();
+    isSwitching.set(false);
   };
 
   useObserve(() => {
     if (CurrentVideo.get()) {
       setTimeout(() => {
         updateVideoPlayback();
-      }, 100);
+      }, 0);
     }
   });
 
-  useEffect(() => {
-    updateVideoPlayback();
-  }, []);
+  useObserve(() => {
+    if (CurrentTime.get()) {
+      updateVideoPlayback();
+    }
+  });
 
   useObserve(() => {
     if (isPlaying.get()) {
@@ -297,41 +381,43 @@ export default function VISVideo({
                 onLoadedData={() => {
                   const buffer = videoBufferRef.current;
                   console.log({ buffer });
-                  //   const videoRef = videoRefs.current[`${cameraName}_0`];
-                  //   if (
-                  //     videoRef &&
-                  //     currentVideos[cameraName] &&
-                  //     buffer?.activeVideoIndex === 0
-                  //   ) {
-                  //     videoRef.currentTime =
-                  //       currentVideos[cameraName].currentTime;
-                  //     if (isPlaying && videoRef.paused) {
-                  //       console.log(
-                  //         `🎬 Auto-playing ${cameraName}_0 on loadedData`
-                  //       );
-                  //       videoRef.play().catch(console.error);
-                  //     }
-                  //   }
+                  const videoRef = videoRefs.current[`${cameraName.get()}_0`];
+                  if (
+                    videoRef &&
+                    CurrentVideo.get() &&
+                    buffer?.activeVideoIndex === 0
+                  ) {
+                    videoRef.currentTime = CurrentVideo.get().currentTime;
+                    if (isPlaying.get() && videoRef.paused) {
+                      console.log(
+                        `🎬 Auto-playing ${cameraName.get()}_0 on loadedData`
+                      );
+                      videoRef.play().catch(console.error);
+                    }
+                  }
                 }}
                 onEnded={() => {
                   console.log(`🏁 ${cameraName.get()}_0 video ended`);
                   const buffer = videoBufferRef.current;
+                  console.log(buffer);
                   if (
                     buffer &&
                     buffer.activeVideoIndex === 0 &&
                     buffer.nextRecordingPreloaded
                   ) {
-                    switchToNextVideo(cameraName);
+                    isSwitching.set(true);
+                    switchToNextVideo(cameraName.get());
                   }
                 }}
                 onError={(e) => {
                   console.error(
-                    `❌ ${cameraName}_0 video error:`,
+                    `❌ ${cameraName.get()}_0 video error:`,
                     e.target.error
                   );
                 }}
               />
-              A
+              {/* Video 1 - Alternates between active and preloading */}
+
               <Reactive.video
                 ref={(el) => (videoRefs.current[`${cameraName.get()}_1`] = el)}
                 className={"video_item"}
@@ -339,42 +425,43 @@ export default function VISVideo({
                 muted
                 preload="metadata"
                 style={{
-                  display: "none",
+                  // display: "none",
                   zIndex: 1,
                 }}
                 onLoadedData={() => {
                   const buffer = videoBufferRef.current;
-                  console.log({ buffer });
-                  //   const videoRef = videoRefs.current[`${cameraName}_0`];
-                  //   if (
-                  //     videoRef &&
-                  //     currentVideos[cameraName] &&
-                  //     buffer?.activeVideoIndex === 0
-                  //   ) {
-                  //     videoRef.currentTime =
-                  //       currentVideos[cameraName].currentTime;
-                  //     if (isPlaying && videoRef.paused) {
-                  //       console.log(
-                  //         `🎬 Auto-playing ${cameraName}_0 on loadedData`
-                  //       );
-                  //       videoRef.play().catch(console.error);
-                  //     }
-                  //   }
+                  const videoRef = videoRefs.current[`${cameraName.get()}_1`];
+                  console.log("onLoadedData");
+                  if (
+                    videoRef &&
+                    CurrentVideo.get() &&
+                    buffer?.activeVideoIndex === 1
+                  ) {
+                    console.log("first");
+                    videoRef.currentTime = CurrentVideo.get().currentTime;
+                    if (isPlaying.get() && videoRef.paused) {
+                      console.log(
+                        `🎬 Auto-playing ${cameraName.get()}_1 on loadedData`
+                      );
+                      videoRef.play().catch(console.error);
+                    }
+                  }
                 }}
                 onEnded={() => {
-                  console.log(`🏁 ${cameraName}_1 video ended`);
-                  //   const buffer = videoBufferRef.current[cameraName];
-                  //   if (
-                  //     buffer &&
-                  //     buffer.activeVideoIndex === 0 &&
-                  //     buffer.nextRecordingPreloaded
-                  //   ) {
-                  //     switchToNextVideo(cameraName);
-                  //   }
+                  console.log(`🏁 ${cameraName.get()}_1 video ended`);
+                  const buffer = videoBufferRef.current[cameraName.get()];
+                  if (
+                    buffer &&
+                    buffer.activeVideoIndex === 1 &&
+                    buffer.nextRecordingPreloaded
+                  ) {
+                    isSwitching.set(true);
+                    switchToNextVideo(cameraName.get());
+                  }
                 }}
                 onError={(e) => {
                   console.error(
-                    `❌ ${cameraName}_1 video error:`,
+                    `❌ ${cameraName.get()}_1 video error:`,
                     e.target.error
                   );
                 }}
@@ -409,7 +496,6 @@ const findActiveRecording = (cameraRecordings, playbackTime) => {
       const videoTime = (playbackTime - recordingStart) / 1000;
       const nextRecording =
         i < sortedRecordings.length - 1 ? sortedRecordings[i + 1] : null;
-      console.log(videoTime, recording.Duration);
       return {
         recording,
         videoTime,
@@ -417,7 +503,8 @@ const findActiveRecording = (cameraRecordings, playbackTime) => {
         recordingEnd,
         recordingIndex: i,
         nextRecording,
-        isNearEnd: videoTime > recording.Duration - 3,
+        // isNearEnd: videoTime > recording.Duration - 3,
+        isNearEnd: videoTime > recording.Duration / 2,
         totalRecordings: sortedRecordings.length,
       };
     }
@@ -434,6 +521,8 @@ function addOrUpdateObject(obj, newKey, newValue) {
 
   if (Object.keys(obj).length > 3) {
     const firstKey = Object.keys(obj)[0];
+    URL.revokeObjectURL(obj[firstKey]);
+    console.log("DELETED BLOB: ", obj[firstKey]);
     delete obj[firstKey];
   }
   return obj;

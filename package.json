@@ -16,6 +16,7 @@
     "axios": "^1.8.1",
     "encrypt-storage": "^2.14.6",
     "livekit-client": "^2.9.1",
+    "lodash.clonedeep": "^4.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-grid-layout": "^1.5.0",

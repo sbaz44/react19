@@ -156,35 +156,10 @@ export default function VIS2() {
   // Initialize currentTime when component mounts
   useEffect(() => {
     const { earliestTime, latestTime } = getTimeRange(RecordingsData.get());
-    console.log({ earliestTime, latestTime });
     if (earliestTime) {
       CurrentTime.set(earliestTime);
-      // setTimeout(() => {
-      //   updateVideoPlayback(earliestTime);
-      // }, 100);
     }
   }, []);
-
-  useObserve(() => {
-    console.log(RecordingsData.get());
-  });
-
-  // useObserve(() => {
-  //   console.log(timeline.current, CurrentTime.get());
-  //   if (CurrentTime.get()) {
-  //     if (timeline?.current) {
-  //       try {
-  //         console.log("here", CurrentTime.get());
-  //         timeline.current.setCustomTime(CurrentTime.get(), "playback");
-  //       } catch (error) {
-  //         timeline.current.addCustomTime(CurrentTime.get(), "playback");
-  //         timeline.current.setCustomTimeTitle("Playback Position", "playback");
-  //       }
-
-  //       // updateVideoPlayback(currentTime);
-  //     }
-  //   }
-  // });
 
   const RecordingKeys$ = useComputed(() => Object.keys(RecordingsData.get()));
 
@@ -205,11 +180,10 @@ export default function VIS2() {
 
       if (timeline?.current) {
         try {
-          console.log("here", CurrentTime.get());
           timeline.current.setCustomTime(CurrentTime.get(), "playback");
-          timeline.current.moveTo(CurrentTime.get(), { animation: true });
+          // timeline.current.moveTo(CurrentTime.get(), { animation: true });
         } catch (error) {
-          timeline.current.moveTo(CurrentTime.get(), { animation: true });
+          // timeline.current.moveTo(CurrentTime.get(), { animation: true });
 
           timeline.current.addCustomTime(CurrentTime.get(), "playback");
           timeline.current.setCustomTimeTitle("Playback Position", "playback");
@@ -316,39 +290,39 @@ const recordingsData = {
       StartTime: "2025-07-31T12:22:25+05:30",
     },
   ],
-  "camera 2": [
-    {
-      Path: "/static_server/recorder/assets/splits/1.mp4",
-      // Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-16-37-18.mp4",
-      Duration: 64,
-      StartTime: "2025-07-31T12:16:37+05:30",
-    },
-    {
-      Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-17-41-19.mp4",
-      Duration: 63.97800064086914,
-      StartTime: "2025-07-31T12:17:41+05:30",
-    },
-    {
-      Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-18-45-20.mp4",
-      Duration: 64.11399841308594,
-      StartTime: "2025-07-31T12:18:45+05:30",
-    },
-    {
-      Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-19-49-21.mp4",
-      Duration: 63.974998474121094,
-      StartTime: "2025-07-31T12:19:49+05:30",
-    },
-    {
-      Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-20-53-22.mp4",
-      Duration: 64,
-      StartTime: "2025-07-31T12:20:53+05:30",
-    },
-    {
-      Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-21-57-23.mp4",
-      Duration: 63.972999572753906,
-      StartTime: "2025-07-31T12:21:57+05:30",
-    },
-  ],
+  // "camera 2": [
+  //   {
+  //     // Path: "/static_server/recorder/assets/splits/1.mp4",
+  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-16-37-18.mp4",
+  //     Duration: 64,
+  //     StartTime: "2025-07-31T12:16:37+05:30",
+  //   },
+  //   {
+  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-17-41-19.mp4",
+  //     Duration: 63.97800064086914,
+  //     StartTime: "2025-07-31T12:17:41+05:30",
+  //   },
+  //   {
+  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-18-45-20.mp4",
+  //     Duration: 64.11399841308594,
+  //     StartTime: "2025-07-31T12:18:45+05:30",
+  //   },
+  //   {
+  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-19-49-21.mp4",
+  //     Duration: 63.974998474121094,
+  //     StartTime: "2025-07-31T12:19:49+05:30",
+  //   },
+  //   {
+  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-20-53-22.mp4",
+  //     Duration: 64,
+  //     StartTime: "2025-07-31T12:20:53+05:30",
+  //   },
+  //   {
+  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-21-57-23.mp4",
+  //     Duration: 63.972999572753906,
+  //     StartTime: "2025-07-31T12:21:57+05:30",
+  //   },
+  // ],
 };
 
 export const getTimeRange = (data) => {
@@ -365,12 +339,10 @@ export const getTimeRange = (data) => {
       if (!earliestTime || firstStart < earliestTime) {
         earliestTime = firstStart;
       }
-      console.log({ sortedRecordings, earliestTime });
       const totalDuration = sortedRecordings.reduce(
         (sum, rec) => sum + rec.Duration,
         0
       );
-      console.log({ totalDuration });
       const lastTime = new Date(firstStart.getTime() + totalDuration * 1000);
       if (!latestTime || lastTime > latestTime) {
         latestTime = lastTime;
