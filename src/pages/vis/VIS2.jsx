@@ -26,8 +26,11 @@ export default function VIS2() {
     isPlaying: false,
   });
 
+  const timeRange = useComputed(() => getTimeRange(RecordingsData.get()));
+
   useEffect(() => {
     const transformDataForTimeline = (data) => {
+      console.log("transformDataForTimeline");
       const groups = [];
       const items = [];
       let itemId = 1;
@@ -84,7 +87,7 @@ export default function VIS2() {
     // console.log({ groups, items });
     const groupsDataSet = new DataSet(groups);
     const itemsDataSet = new DataSet(items);
-    const { earliestTime, latestTime } = getTimeRange(RecordingsData.get());
+    const { earliestTime, latestTime } = timeRange.get();
     // console.log({ earliestTime, latestTime });
     if (!CurrentTime.get() && earliestTime) {
       CurrentTime.set(earliestTime);
@@ -100,6 +103,7 @@ export default function VIS2() {
       //  zoomMin: 1000 * 60,
       zoomMax: 1000 * 60 * 60 * 24,
       groupOrder: "content",
+      showMajorLabels: false,
       format: {
         minorLabels: {
           minute: "HH:mm",
@@ -137,7 +141,6 @@ export default function VIS2() {
 
       timeline.current.on("timechange", (event) => {
         if (event.id === "playback") {
-          console.log("playback");
           CurrentTime.set(event.time);
         }
       });
@@ -155,7 +158,8 @@ export default function VIS2() {
 
   // Initialize currentTime when component mounts
   useEffect(() => {
-    const { earliestTime, latestTime } = getTimeRange(RecordingsData.get());
+    // const { earliestTime, latestTime } = getTimeRange(RecordingsData.get());
+    const { earliestTime, latestTime } = timeRange.get();
     if (earliestTime) {
       CurrentTime.set(earliestTime);
     }
@@ -168,7 +172,8 @@ export default function VIS2() {
 
     isPlaying.set(true);
 
-    const { earliestTime, latestTime } = getTimeRange(RecordingsData.get());
+    // const { earliestTime, latestTime } = getTimeRange(RecordingsData.get());
+    const { earliestTime, latestTime } = timeRange.get();
     playbackIntervalRef.current = setInterval(() => {
       CurrentTime.set((prevTime) => {
         const newTime = new Date(prevTime.getTime() + 1000);
