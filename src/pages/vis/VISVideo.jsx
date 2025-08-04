@@ -43,9 +43,10 @@ export default function VISVideo({
     let _downloadedVideos = cloneDeep(downloadedVideos.get());
     if (_downloadedVideos[key]) {
       console.log(`✅ Video already present for ${url} at index- ${key}`);
+      console.log({ _downloadedVideos });
       return _downloadedVideos[key];
     }
-    console.log(`❌ Fetching new video form ${url} ${key} }:`);
+    console.log(`❌ Fetching new video from ${url} ${key} }:`);
     try {
       const response = await fetch(url);
       let blob = await response.blob();
@@ -77,10 +78,11 @@ export default function VISVideo({
 
   // Preload next video in the inactive video element
   const preloadNextVideo = async (cameraName, nextRecording) => {
-    console.log("preloadNextVideo");
+    console.log("preloadNextVideo", nextRecording?.Path);
     if (!nextRecording) return;
 
     const buffer = videoBufferRef.current;
+    console.log({ buffer });
     if (!buffer || buffer.isPreloading) return;
 
     buffer.isPreloading = true;
@@ -95,13 +97,16 @@ export default function VISVideo({
         }: ${nextRecording.Path.split("/").pop()}`
       );
 
-      // Clear any existing video content first
+      // Clear any existing video content {buffer}
       preloadVideoRef.src = "";
       preloadVideoRef.load();
       preloadVideoRef.style.zIndex = 1;
 
       //fetch video
-      let blobURL = await fetchVideo(nextVideoUrl, buffer.preloadingVideoIndex);
+      console.log("currentIndex---->", buffer.currentIndex);
+      const nextRecordingIndex = buffer.currentIndex + 1;
+      console.log({ nextRecordingIndex });
+      let blobURL = await fetchVideo(nextVideoUrl, nextRecordingIndex);
       console.log({ blobURL });
 
       // Set the new source
@@ -145,24 +150,28 @@ export default function VISVideo({
     let newCurrentVideos = {};
     let newVideoStates = {};
     let _downloadedVideos = cloneDeep(downloadedVideos.get());
+    let activeInfo = findActiveRecording(RecordingsData.get(), playbackTime);
     // Create cache key
-    const cacheKey = `${playbackTime.getTime()}_${RecordingsData.get().length}`;
-    let activeInfo;
-    if (activeRecordingCache.current.has(cacheKey)) {
-      activeInfo = activeRecordingCache.current.get(cacheKey);
-    } else {
-      activeInfo = findActiveRecording(RecordingsData.get(), playbackTime);
+    // const cacheKey = `${playbackTime.getTime()}_${RecordingsData.get().length}`;
+    // let activeInfo;
+    // if (activeRecordingCache.current.has(cacheKey)) {
+    //   console.log("has");
+    //   activeInfo = activeRecordingCache.current.get(cacheKey);
+    // } else {
+    //   console.log("not has");
 
-      // Cache the result (limit cache size)
-      if (activeRecordingCache.current.size > 50) {
-        const firstKey = activeRecordingCache.current.keys().next().value;
-        activeRecordingCache.current.delete(firstKey);
-      }
-      activeRecordingCache.current.set(cacheKey, activeInfo);
-    }
+    //   activeInfo = findActiveRecording(RecordingsData.get(), playbackTime);
 
+    //   // Cache the result (limit cache size)
+    //   if (activeRecordingCache.current.size > 50) {
+    //     const firstKey = activeRecordingCache.current.keys().next().value;
+    //     activeRecordingCache.current.delete(firstKey);
+    //   }
+    //   activeRecordingCache.current.set(cacheKey, activeInfo);
+    // }
+    // console.log({ cacheKey }, activeRecordingCache.current);
     // const activeInfo = findActiveRecording(RecordingsData.get(), playbackTime);
-    // console.log(activeInfo && activeInfo);
+    console.log(activeInfo && { activeInfo });
     if (activeInfo) {
       const videoUrl = `${HOST_URL}${activeInfo.recording.Path}`;
       const currentblobURL = _downloadedVideos?.[activeInfo.recordingIndex];
@@ -184,7 +193,7 @@ export default function VISVideo({
       }
 
       const buffer = videoBufferRef.current;
-      // console.log({ buffer });
+      console.log({ buffer });
 
       // Check if we need to switch to a different recording
       if (
@@ -196,18 +205,37 @@ export default function VISVideo({
             currentState.recordingIndex
           } to ${activeInfo.recordingIndex}`
         );
+        buffer.nextRecordingPreloaded = false;
+        buffer.currentIndex = activeInfo.recordingIndex;
+
+        // 🆕 Reset switching state on manual jumps
+        if (switchingStateRef.current.isSwitching) {
+          console.log(`🔄 Manual jump detected, resetting switching state`);
+          switchingStateRef.current.isSwitching = false;
+          switchingStateRef.current.pendingUpdate = null;
+
+          // Update buffer indices to match the new recording
+          buffer.activeVideoIndex = 0; // Reset to primary video
+          buffer.preloadingVideoIndex = 1;
+        }
       } else {
-        console.log(`1.2 Same recording, just sync time and play state`);
+        // console.log(`1.2 Same recording, just sync time and play state`);
         // Same recording, just sync time and play state
         const activeVideoRef =
           videoRefs.current[
             `${cameraName.get()}_${buffer?.activeVideoIndex || 0}`
           ];
+
+        console.log(`${cameraName.get()}_${buffer?.activeVideoIndex || 0}`);
+
+        console.log(videoRefs.current);
         // console.log({ activeVideoRef });
         if (activeVideoRef) {
-          console.log("1.3 If video doesn't have a source yet, set it");
+          console.log(activeVideoRef.src, currentblobURL);
+          // console.log("1.3 If video doesn't have a source yet, set it");
           // If video doesn't have a source yet, set it
           if (!activeVideoRef.src || activeVideoRef.src !== currentblobURL) {
+            console.log({ activeVideoRef, currentblobURL });
             console.log(
               `1.4 📹 Loading initial video for ${cameraName.get()}: ${videoUrl}`
             );
@@ -226,15 +254,13 @@ export default function VISVideo({
             // Start preloading next video if available
             if (activeInfo.nextRecording && !buffer.nextRecordingPreloaded) {
               console.log("1.8 Start preloading next video if available");
-              setTimeout(
-                () =>
-                  preloadNextVideo(cameraName.get(), activeInfo.nextRecording),
-                3000
-              );
+
+              preloadNextVideo(cameraName.get(), activeInfo.nextRecording);
             }
           } else {
             // Video already loaded, just sync time and play state
             // console.log(activeVideoRef.currentTime, activeInfo.videoTime);
+            console.log(videoBufferRef.current);
             if (
               Math.abs(activeVideoRef.currentTime - activeInfo.videoTime) > 0.5
             ) {
@@ -253,7 +279,11 @@ export default function VISVideo({
         } else {
         }
       }
-      // Start preloading next video when near end (within 3 seconds)
+      // Start preloading next video when near end
+      if (activeInfo.isNearEnd) {
+        console.log({ activeInfo, buffer });
+      }
+
       if (
         activeInfo.isNearEnd &&
         activeInfo.nextRecording &&
@@ -262,10 +292,11 @@ export default function VISVideo({
         !buffer.isPreloading
       ) {
         console.log(
-          `1.10 Start preloading next video when near end (within 3 seconds)`,
+          `1.10 Start preloading next video when near end `,
           activeInfo
         );
         // console.log("preloadNextVideo");
+        console.log(activeInfo);
         preloadNextVideo(cameraName.get(), activeInfo.nextRecording);
       }
     } else {
@@ -325,6 +356,7 @@ export default function VISVideo({
         currentVideoRef.style.zIndex = 1; // Hide current video
         nextVideoRef.style.zIndex = 2; // Show next video (bring to front)
 
+        console.log("ZINDEX SWAPPED", switchingStateRef.current.isSwitching);
         // Start playing the preloaded video immediately
         if (isPlaying.get()) {
           nextVideoRef.play().catch(console.error);
@@ -346,15 +378,31 @@ export default function VISVideo({
 
         // Start preloading the next recording
         const nextRecordingIndex = buffer.currentIndex + 1;
-        console.log(nextRecordingIndex, buffer);
+        console.log({ nextRecordingIndex, buffer });
         if (nextRecordingIndex < buffer.recordings.length) {
           const nextRecording = buffer.recordings[nextRecordingIndex];
-          console.log(nextRecording);
-          setTimeout(() => preloadNextVideo(cameraName, nextRecording), 1000);
+          console.log({ nextRecording });
+          // setTimeout(() => preloadNextVideo(cameraName, nextRecording), 1000);
+          preloadNextVideo(cameraName, nextRecording);
         }
+
+        // Add a safety timeout to prevent permanent stuck state
+        const switchTimeout = setTimeout(() => {
+          if (switchingStateRef.current.isSwitching) {
+            console.log(
+              `⚠️ Switching timeout for ${cameraName}, forcing reset`
+            );
+            switchingStateRef.current.isSwitching = false;
+            switchingStateRef.current.pendingUpdate = null;
+          }
+        }, 5000);
 
         // CLEAR SWITCHING STATE
         switchingStateRef.current.isSwitching = false;
+        clearTimeout(switchTimeout);
+        console.log("switchingStateRef.current.isSwitching");
+        console.log(downloadedVideos.get());
+        console.log({ buffer });
 
         // PROCESS PENDING UPDATES
         if (switchingStateRef.current.pendingUpdate) {
@@ -461,6 +509,11 @@ export default function VISVideo({
         const videoTime = (playbackTime - recordingStart) / 1000;
         const nextRecording =
           i < sortedRecordings.length - 1 ? sortedRecordings[i + 1] : null;
+        console.log(
+          videoTime,
+          recording.Duration,
+          videoTime > recording.Duration / 2
+        );
         return {
           recording,
           videoTime,

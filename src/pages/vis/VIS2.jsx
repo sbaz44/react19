@@ -84,11 +84,9 @@ export default function VIS2() {
       return { groups, items };
     };
     const { groups, items } = transformDataForTimeline(RecordingsData.get());
-    // console.log({ groups, items });
     const groupsDataSet = new DataSet(groups);
     const itemsDataSet = new DataSet(items);
     const { earliestTime, latestTime } = timeRange.get();
-    // console.log({ earliestTime, latestTime });
     if (!CurrentTime.get() && earliestTime) {
       CurrentTime.set(earliestTime);
     }
@@ -199,7 +197,21 @@ export default function VIS2() {
     }, 1000);
   };
 
-  const stopPlayback = () => {};
+  const stopPlayback = () => {
+    console.log("stopPlayback");
+    isPlaying.set(false);
+    if (playbackIntervalRef.current) {
+      clearInterval(playbackIntervalRef.current);
+      playbackIntervalRef.current = null;
+    }
+
+    Object.keys(RecordingsData.get()).forEach((cameraName) => {
+      const video0 = videoRefs.current[`${cameraName}_0`];
+      const video1 = videoRefs.current[`${cameraName}_1`];
+      if (video0 && !video0.paused) video0.pause();
+      if (video1 && !video1.paused) video1.pause();
+    });
+  };
 
   return (
     <div className="vis_container">
@@ -237,7 +249,7 @@ export default function VIS2() {
         </Show>
       </div>
       <Reactive.button
-        onClick={isPlaying.get() ? stopPlayback : startPlayback}
+        onClick={() => (isPlaying.get() ? stopPlayback() : startPlayback())}
         $style={() => ({
           marginRight: "10px",
           padding: "8px 16px",
