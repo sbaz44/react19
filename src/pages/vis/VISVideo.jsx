@@ -173,9 +173,14 @@ export default function VISVideo({
     // const activeInfo = findActiveRecording(RecordingsData.get(), playbackTime);
     console.log(activeInfo && { activeInfo });
     if (activeInfo) {
+      const buffer = videoBufferRef.current;
+      console.log({ buffer });
       const videoUrl = `${HOST_URL}${activeInfo.recording.Path}`;
-      const currentblobURL = _downloadedVideos?.[activeInfo.recordingIndex];
+      const currentblobURL = buffer
+        ? _downloadedVideos?.[buffer.currentIndex]
+        : _downloadedVideos?.[activeInfo.recordingIndex];
       const currentState = VideoState.get();
+
       newCurrentVideos = {
         url: videoUrl,
         currentTime: activeInfo.videoTime,
@@ -192,7 +197,6 @@ export default function VISVideo({
         initializeVideoSystem(RecordingsData.get());
       }
 
-      const buffer = videoBufferRef.current;
       console.log({ buffer });
 
       // Check if we need to switch to a different recording

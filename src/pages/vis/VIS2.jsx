@@ -205,12 +205,12 @@ export default function VIS2() {
       playbackIntervalRef.current = null;
     }
 
-    Object.keys(RecordingsData.get()).forEach((cameraName) => {
-      const video0 = videoRefs.current[`${cameraName}_0`];
-      const video1 = videoRefs.current[`${cameraName}_1`];
-      if (video0 && !video0.paused) video0.pause();
-      if (video1 && !video1.paused) video1.pause();
-    });
+    // Object.keys(RecordingsData.get()).forEach((cameraName) => {
+    //   const video0 = videoRefs.current[`${cameraName}_0`];
+    //   const video1 = videoRefs.current[`${cameraName}_1`];
+    //   if (video0 && !video0.paused) video0.pause();
+    //   if (video1 && !video1.paused) video1.pause();
+    // });
   };
 
   return (
@@ -277,69 +277,68 @@ export default function VIS2() {
 const recordingsData = {
   "camera 1": [
     {
-      Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-17-18-223.mp4",
-      Duration: 62.23899841308594,
-      StartTime: "2025-07-31T12:17:18+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-21-12-16-155.mp4",
+      Duration: 61.16699981689453,
+      StartTime: "2025-08-04T21:12:16+05:30",
     },
     {
-      Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-18-20-224.mp4",
-      Duration: 60.35300064086914,
-      StartTime: "2025-07-31T12:18:20+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-21-13-17-156.mp4",
+      Duration: 61.388999938964844,
+      StartTime: "2025-08-04T21:13:17+05:30",
     },
     {
-      Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-19-20-225.mp4",
-      Duration: 62.29800033569336,
-      StartTime: "2025-07-31T12:19:20+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-21-14-18-157.mp4",
+      Duration: 61.20500183105469,
+      StartTime: "2025-08-04T21:14:18+05:30",
     },
     {
-      Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-20-23-226.mp4",
-      Duration: 62.236000061035156,
-      StartTime: "2025-07-31T12:20:23+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-21-15-19-158.mp4",
+      Duration: 61.27799987792969,
+      StartTime: "2025-08-04T21:15:19+05:30",
     },
     {
-      Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-21-24-227.mp4",
-      Duration: 60.340999603271484,
-      StartTime: "2025-07-31T12:21:24+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-21-16-20-159.mp4",
+      Duration: 60.369998931884766,
+      StartTime: "2025-08-04T21:16:20+05:30",
     },
     {
-      Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-22-25-228.mp4",
-      Duration: 60.404998779296875,
-      StartTime: "2025-07-31T12:22:25+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-21-17-20-160.mp4",
+      Duration: 61.308998107910156,
+      StartTime: "2025-08-04T21:17:20+05:30",
     },
   ],
-  // "camera 2": [
-  //   {
-  //     // Path: "/static_server/recorder/assets/splits/1.mp4",
-  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-16-37-18.mp4",
-  //     Duration: 64,
-  //     StartTime: "2025-07-31T12:16:37+05:30",
-  //   },
-  //   {
-  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-17-41-19.mp4",
-  //     Duration: 63.97800064086914,
-  //     StartTime: "2025-07-31T12:17:41+05:30",
-  //   },
-  //   {
-  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-18-45-20.mp4",
-  //     Duration: 64.11399841308594,
-  //     StartTime: "2025-07-31T12:18:45+05:30",
-  //   },
-  //   {
-  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-19-49-21.mp4",
-  //     Duration: 63.974998474121094,
-  //     StartTime: "2025-07-31T12:19:49+05:30",
-  //   },
-  //   {
-  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-20-53-22.mp4",
-  //     Duration: 64,
-  //     StartTime: "2025-07-31T12:20:53+05:30",
-  //   },
-  //   {
-  //     Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-21-57-23.mp4",
-  //     Duration: 63.972999572753906,
-  //     StartTime: "2025-07-31T12:21:57+05:30",
-  //   },
-  // ],
+  "camera 2": [
+    {
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-21-11-52-155.mp4",
+      Duration: 60.284000396728516,
+      StartTime: "2025-08-04T21:11:52+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-21-12-52-156.mp4",
+      Duration: 60.31700134277344,
+      StartTime: "2025-08-04T21:12:52+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-21-13-52-157.mp4",
+      Duration: 60.30799865722656,
+      StartTime: "2025-08-04T21:13:52+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-21-14-52-158.mp4",
+      Duration: 60.4370002746582,
+      StartTime: "2025-08-04T21:14:52+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-21-15-53-159.mp4",
+      Duration: 62.10100173950195,
+      StartTime: "2025-08-04T21:15:53+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-21-16-55-160.mp4",
+      Duration: 60.48699951171875,
+      StartTime: "2025-08-04T21:16:55+05:30",
+    },
+  ],
 };
 
 export const getTimeRange = (data) => {

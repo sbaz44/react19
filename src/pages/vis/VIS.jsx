@@ -22,70 +22,69 @@ const CameraRecordingsTimeline = () => {
   const recordingsData = {
     "camera 1": [
       {
-        Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-17-18-223.mp4",
-        Duration: 62.23899841308594,
-        StartTime: "2025-07-31T12:17:18+05:30",
+        Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-18-36-01-1.mp4",
+        Duration: 60.33100128173828,
+        StartTime: "2025-08-04T18:36:01+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-18-20-224.mp4",
-        Duration: 60.35300064086914,
-        StartTime: "2025-07-31T12:18:20+05:30",
+        Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-18-37-02-2.mp4",
+        Duration: 60.63600158691406,
+        StartTime: "2025-08-04T18:37:02+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-19-20-225.mp4",
-        Duration: 62.29800033569336,
-        StartTime: "2025-07-31T12:19:20+05:30",
+        Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-18-38-02-3.mp4",
+        Duration: 60.090999603271484,
+        StartTime: "2025-08-04T18:38:02+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-20-23-226.mp4",
-        Duration: 62.236000061035156,
-        StartTime: "2025-07-31T12:20:23+05:30",
+        Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-18-39-02-4.mp4",
+        Duration: 60.11399841308594,
+        StartTime: "2025-08-04T18:39:02+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-21-24-227.mp4",
-        Duration: 60.340999603271484,
-        StartTime: "2025-07-31T12:21:24+05:30",
+        Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-18-40-02-5.mp4",
+        Duration: 60.32699966430664,
+        StartTime: "2025-08-04T18:40:02+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fae6f5c6a7b8d0757a/2025-07-31/2025-07-31-12-22-25-228.mp4",
-        Duration: 60.404998779296875,
-        StartTime: "2025-07-31T12:22:25+05:30",
+        Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-04/2025-08-04-18-41-03-6.mp4",
+        Duration: 60.15800094604492,
+        StartTime: "2025-08-04T18:41:03+05:30",
       },
     ],
     "camera 2": [
       {
-        Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-16-37-18.mp4",
-        Duration: 64,
-        StartTime: "2025-07-31T12:16:37+05:30",
+        Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-18-36-00-1.mp4",
+        Duration: 60.15599822998047,
+        StartTime: "2025-08-04T18:36:00+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-17-41-19.mp4",
-        Duration: 63.97800064086914,
-        StartTime: "2025-07-31T12:17:41+05:30",
+        Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-18-37-00-2.mp4",
+        Duration: 62.07899856567383,
+        StartTime: "2025-08-04T18:37:00+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-18-45-20.mp4",
-        Duration: 64.11399841308594,
-        StartTime: "2025-07-31T12:18:45+05:30",
+        Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-18-38-03-3.mp4",
+        Duration: 60.10200119018555,
+        StartTime: "2025-08-04T18:38:03+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-19-49-21.mp4",
-        Duration: 63.974998474121094,
-        StartTime: "2025-07-31T12:19:49+05:30",
+        Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-18-39-03-4.mp4",
+        Duration: 60.125999450683594,
+        StartTime: "2025-08-04T18:39:03+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-20-53-22.mp4",
-        Duration: 64,
-        StartTime: "2025-07-31T12:20:53+05:30",
+        Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-18-40-03-5.mp4",
+        Duration: 60.13100051879883,
+        StartTime: "2025-08-04T18:40:03+05:30",
       },
       {
-        Path: "/static_server/recorder/recordings/688376fde6f5c6a7b8d0757d/2025-07-31/2025-07-31-12-21-57-23.mp4",
-        Duration: 63.972999572753906,
-        StartTime: "2025-07-31T12:21:57+05:30",
+        Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-04/2025-08-04-18-41-03-6.mp4",
+        Duration: 60.20199966430664,
+        StartTime: "2025-08-04T18:41:03+05:30",
       },
     ],
   };
-
   // Initialize currentTime when component mounts
   useEffect(() => {
     const { earliestTime } = getTimeRange();

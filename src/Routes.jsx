@@ -8,6 +8,7 @@ import GoogleLoginReact from "./pages/GoogleLogin";
 import Register from "./pages/Register";
 import VIS from "./pages/vis/VIS";
 import VIS2 from "./pages/vis/VIS2";
+import VIS3 from "./pages/vis/VIS3";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -19,6 +20,7 @@ export default function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/vis" element={<VIS />} />
       <Route path="/vis2" element={<VIS2 />} />
+      <Route path="/vis3" element={<VIS3 />} />
 
       {/* <Route path="/course" element={<Courses />} />
         <Route path="/live" element={<Live />} />
