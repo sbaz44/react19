@@ -18,6 +18,7 @@ export default function VISVideo2({
   const videoRef1 = useRef(null);
   const videoRef2 = useRef(null);
   const videoBufferRef = useRef(null);
+  const renderCount = ++useRef(0).current;
 
   const sortedRecordings$ = useSelector(() => {
     return [...RecordingsData.get()].sort(
@@ -51,6 +52,11 @@ export default function VISVideo2({
     return active;
   };
 
+  const preloadNextVideo = (nextRecording) => {
+    console.log({ nextRecording });
+    console.log(videoBufferRef.current);
+  };
+
   const initializeVideoSystem = (data) => {
     console.log(data);
     videoBufferRef.current = {
@@ -67,6 +73,8 @@ export default function VISVideo2({
       videoRef1.current.src = `${HOST_URL}${data.recording.Path}`;
       videoRef1.current.load();
     }, 0);
+
+    preloadNextVideo();
   };
 
   useEffect(() => {
@@ -106,6 +114,21 @@ export default function VISVideo2({
       videoRef1.current.src = `${HOST_URL}${activeInfo.recording.Path}`;
       videoRef1.current.load();
       videoRef1.current.currentTime = relativeTime;
+      const { nextRecording } = activeInfo;
+      if (nextRecording) {
+        //next recording exists
+        // TODO
+        videoBufferRef.current = {
+          info: activeInfo,
+          currentIndex: activeInfo.recordingIndex,
+          activeVideoIndex: 0, // 0 or 1 - which video is currently active
+          preloadingVideoIndex: 1, // 0 or 1 - which video is preloading
+          isPreloading: false,
+          nextRecordingPreloaded: false,
+        };
+      } else {
+        //no next recording
+      }
       // videoRef1.current.play();
     } else {
       //null
@@ -126,15 +149,49 @@ export default function VISVideo2({
     };
   }, []);
 
+  useObserve(() => {
+    if (isPlaying.get()) {
+      console.log("playing");
+      console.log(videoBufferRef.current);
+      const { activeVideoIndex } = videoBufferRef.current;
+      const currentVideoRef = activeVideoIndex
+        ? videoRef2.current
+        : videoRef1.current;
+      console.log(currentVideoRef);
+    }
+  });
+
   return (
     <div className="vis_video_item">
-      <Show if={CurrentVideo} else={() => <div>No recording</div>}>
-        {() => (
-          <>
-            <Reactive.video ref={videoRef1} />
-          </>
-        )}
-      </Show>
+      <h4 style={{ margin: "0 0 10px 0", textAlign: "center" }}>
+        {cameraName.peek().charAt(0).toUpperCase() + cameraName.peek().slice(1)}
+        ({renderCount})
+      </h4>
+      <div className="video_item_wrapper">
+        <Show if={CurrentVideo} else={() => <div>No recording</div>}>
+          {() => (
+            <>
+              <Reactive.video
+                preload="metadata"
+                ref={videoRef1}
+                className={"video_item"}
+                controls={false}
+                muted
+              />
+              <Reactive.video
+                preload="metadata"
+                ref={videoRef2}
+                className={"video_item"}
+                controls={false}
+                muted
+                style={{
+                  zIndex: 1,
+                }}
+              />
+            </>
+          )}
+        </Show>
+      </div>
     </div>
   );
 }
