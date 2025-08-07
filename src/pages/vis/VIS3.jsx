@@ -15,6 +15,7 @@ import "vis-timeline/styles/vis-timeline-graph2d.css";
 import VISVideo2 from "./VISVideo2";
 const HOST_URL = "http://192.168.1.121:8000";
 import "./vis.scss";
+
 export default function VIS3() {
   const animationRef = useRef(null);
   const timelineRef = useRef(null);
@@ -27,31 +28,31 @@ export default function VIS3() {
     endTime: null,
   });
 
-  const { isPlaying, CurrentTime, RecordingsData, PlaybackSpeed } =
-    useObservable({
-      isPlaying: false,
-      CurrentTime: null,
-      RecordingsData: recordingsData,
-      PlaybackSpeed: 1,
-    });
+  const {
+    isPlaying,
+    CurrentTime,
+    RecordingsData,
+    PlaybackSpeed,
+    loadingCameras,
+    isSystemLoading,
+  } = useObservable({
+    isPlaying: false,
+    CurrentTime: null,
+    RecordingsData: recordingsData,
+    PlaybackSpeed: 1,
+    loadingCameras: new Set(),
+    isSystemLoading: false,
+  });
 
   const cameraNames = useComputed(Object.keys(RecordingsData.get()));
+  const handleSpeedChange = (speed) => PlaybackSpeed.set(speed);
 
-  const handlePlayPause = () => {};
+  const handlePlayPause = () => {
+    // Don't allow play/pause during loading
+    console.log(isSystemLoading.get());
+    if (isSystemLoading.get()) return;
 
-  const findActiveRecordings = (time) => {
-    const active = {};
-    cameraNames.get().forEach((camera) => {
-      active[camera] = null;
-    });
-
-    timelineData.current.items.forEach((recording) => {
-      if (time >= recording.startTime && time <= recording.endTime) {
-        active[recording.cameraName] = recording;
-      }
-    });
-
-    return active;
+    isPlaying.set((prev) => !prev);
   };
 
   const transformDataForTimeline = (data) => {
@@ -68,6 +69,7 @@ export default function VIS3() {
     const processedRecordings = [];
     let globalStartTime = null;
     let globalEndTime = null;
+
     // Create groups and process recordings for each camera
     cameraNames.get().forEach((cameraName, cameraIndex) => {
       const color = colors[cameraIndex % colors.length];
@@ -122,6 +124,7 @@ export default function VIS3() {
           endTime,
           videoUrl: HOST_URL + recording.Path,
           duration: recording.Duration,
+          recording: recording, // Store original recording data
         });
 
         // Move to next position
@@ -135,6 +138,7 @@ export default function VIS3() {
       startTime: globalStartTime,
       endTime: globalEndTime,
     };
+
     return {
       groups,
       items,
@@ -144,44 +148,51 @@ export default function VIS3() {
   };
 
   const onTimelineClick = (timelineProperties) => {
-    // console.log({ timelineProperties });
     console.log("🖱️ Timeline clicked during playback:", isPlaying.get());
+
+    // Don't allow timeline interaction during loading
+    if (isSystemLoading.get()) {
+      console.log("🚫 Timeline interaction blocked - system is loading");
+      return;
+    }
+
     let _time = timelineProperties.time;
-    // console.log({ _time });
     if (typeof _time !== "number") {
       _time = timelineProperties.time.getTime();
     }
-    // console.log({ _time });
-    // const clickedTime = new Date(timelineProperties.time.valueOf());
 
-    //rounding off time,
+    // Rounding off time
     const snappedTime = new Date(Math.round(_time / 500) * 500);
-    // console.log("📍 Setting time to:", snappedTime.toISOString());
-    // console.log("📍 Current animation frame ID:", animationRef.current);
+    console.log("📍 Setting time to:", snappedTime.toISOString());
 
     // Invalidate any running animation immediately
     animationId.current = null;
-    // console.log("🛑 Invalidated animation ID");
+    console.log("🛑 Invalidated animation ID");
+
+    // Pause playback immediately to prevent time updates during loading
+    const wasPlaying = isPlaying.get();
+    if (wasPlaying) {
+      isPlaying.set(false);
+    }
 
     timeline.current.setCustomTime(snappedTime, "playback");
-    // timelineRef.current.currentTime.options.showCurrentTime = true;
     CurrentTime.set(snappedTime);
-    console.log(
-      "📍 After setting - CurrentTime is:",
-      CurrentTime.get().toISOString()
-    );
-    // If playing, restart animation from new time
-    if (isPlaying.get()) {
-      console.log("🔄 Restarting animation from clicked time");
-      startAnimation();
-    }
 
     // Create a custom event with optional data
     const myEvent = new CustomEvent("timelineClicked", {
       detail: snappedTime,
     });
-
     document.dispatchEvent(myEvent);
+
+    // Store the playing state to resume after loading if needed
+    if (wasPlaying) {
+      // Will be resumed by loading finish handler
+      setTimeout(() => {
+        if (!isSystemLoading.get()) {
+          isPlaying.set(true);
+        }
+      }, 100);
+    }
   };
 
   useEffect(() => {
@@ -189,7 +200,6 @@ export default function VIS3() {
 
     const { groups, items, globalStartTime, globalEndTime } =
       transformDataForTimeline(RecordingsData.get());
-    console.log({ groups, items });
 
     const options = {
       stack: false,
@@ -198,10 +208,8 @@ export default function VIS3() {
       selectable: false,
       orientation: "top",
       showCurrentTime: false,
-      //  zoomMin: 1000 * 60,
       zoomMax: 1000 * 60 * 60 * 24,
       groupOrder: "id",
-      // showMajorLabels: false,
       margin: { item: 10, axis: 20 },
       format: {
         minorLabels: {
@@ -236,20 +244,24 @@ export default function VIS3() {
   }, []);
 
   const startAnimation = useRef(() => {
+    // Don't start animation if system is loading
+    if (isSystemLoading.get()) {
+      console.log("🚫 Animation blocked - system is loading");
+      return;
+    }
+
     // console.log("✅ Starting fresh animation loop");
 
     // Cancel any existing animation first
     if (animationRef.current) {
-      // console.log("🚫 Canceling existing animation");
       cancelAnimationFrame(animationRef.current);
     }
 
     const currentAnimationId = Date.now();
     animationId.current = currentAnimationId;
-    // console.log("🆔 New animation ID:", currentAnimationId);
 
     const startRealTime = Date.now();
-    const startPlaybackTime = CurrentTime.peek().getTime(); // Use peek to avoid subscription
+    const startPlaybackTime = CurrentTime.peek().getTime();
 
     const animate = () => {
       // Check if this animation is still valid
@@ -258,16 +270,22 @@ export default function VIS3() {
         return;
       }
 
+      // Check if system is loading - pause if so
+      if (isSystemLoading.peek()) {
+        console.log("⏸️ Animation paused - system loading");
+        animationRef.current = null;
+        return;
+      }
+
       // Check if still playing without creating subscription
       if (!isPlaying.peek()) {
-        //"🛑 Animation stopped - not playing"
+        console.log("🛑 Animation stopped - not playing");
         animationRef.current = null;
         const snappedTime = new Date(
           Math.round(CurrentTime.get().getTime() / 500) * 500
         );
         CurrentTime.set(snappedTime);
         timeline.current.setCustomTime(snappedTime, "playback");
-
         return;
       }
 
@@ -280,7 +298,7 @@ export default function VIS3() {
         timeline.current.setCustomTime(newTime, "playback");
         animationRef.current = requestAnimationFrame(animate);
       } else {
-        //"🛑 End of timeline reached"
+        console.log("🛑 End of timeline reached");
         isPlaying.set(false);
         animationRef.current = null;
       }
@@ -289,31 +307,85 @@ export default function VIS3() {
     animationRef.current = requestAnimationFrame(animate);
   }).current;
 
-  // This useObserve only handles play/pause state changes
+  // Handle play/pause state changes
   useObserve(() => {
-    // console.log(
-    //   "🔄 useObserve triggered - isPlaying:",
-    //   isPlaying.get(),
-    //   CurrentTime.get()?.getTime()
-    // );
-
     if (
       isPlaying.get() &&
       CurrentTime.get() &&
       timelineData.current.startTime &&
-      timelineData.current.endTime
+      timelineData.current.endTime &&
+      !isSystemLoading.get() // Don't start if loading
     ) {
       // console.log("▶️ Play button pressed - starting animation");
       startAnimation();
     } else {
-      // console.log(
-      //   "⏸️ Pause button pressed or conditions not met - stopping animation"
-      // );
       if (animationRef.current) {
-        // console.log("🚫 Canceling animation frame");
+        console.log("⏸️ Stopping animation");
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
+    }
+  });
+
+  // Listen for video loading events
+  useEffect(() => {
+    const handleVideoLoadingStart = (e) => {
+      const { cameraName } = e.detail;
+      console.log(`📥 Video loading started for ${cameraName}`);
+
+      loadingCameras.set((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(cameraName);
+        return newSet;
+      });
+
+      isSystemLoading.set(true);
+    };
+
+    const handleVideoLoadingFinish = (e) => {
+      const { cameraName } = e.detail;
+      console.log(`📤 Video loading finished for ${cameraName}`);
+
+      loadingCameras.set((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(cameraName);
+        return newSet;
+      });
+
+      // Check if all cameras finished loading
+      if (loadingCameras.get().size === 0) {
+        console.log("✅ All cameras finished loading");
+        isSystemLoading.set(false);
+      }
+    };
+
+    document.addEventListener("videoLoadingStart", handleVideoLoadingStart);
+    document.addEventListener("videoLoadingFinish", handleVideoLoadingFinish);
+
+    return () => {
+      document.removeEventListener(
+        "videoLoadingStart",
+        handleVideoLoadingStart
+      );
+      document.removeEventListener(
+        "videoLoadingFinish",
+        handleVideoLoadingFinish
+      );
+    };
+  }, []);
+
+  // Resume playback when loading finishes (if was playing before)
+  useObserve(() => {
+    const loading = isSystemLoading.get();
+    const playing = isPlaying.get();
+
+    if (!loading && playing) {
+      // Small delay to ensure videos are ready
+      setTimeout(() => {
+        if (isPlaying.get() && !isSystemLoading.get()) {
+          startAnimation();
+        }
+      }, 100);
     }
   });
 
@@ -327,7 +399,6 @@ export default function VIS3() {
                 const RecordingData$ = useComputed(
                   () => RecordingsData.get()[item.get()]
                 );
-                console.log(RecordingData$.get());
                 return (
                   <VISVideo2
                     key={item.peek()}
@@ -336,6 +407,7 @@ export default function VIS3() {
                     CurrentTime={CurrentTime}
                     isPlaying={isPlaying}
                     timelineData={timelineData}
+                    PlaybackSpeed={PlaybackSpeed}
                   />
                 );
               }}
@@ -344,32 +416,62 @@ export default function VIS3() {
         </Show>
       </div>
 
-      <Reactive.button
-        onClick={() => {
-          isPlaying.set((prev) => !prev);
-          if (!isPlaying.get()) {
-            console.log("first");
-            // Reset current time to start when paused
-            // CurrentTime.set(timelineData.current.startTime);
-            // cancelAnimationFrame(animationRef.current);
-            // animationRef.current = null;
-            // CurrentTime.set(null);
-          }
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "10px",
         }}
-        $className={() =>
-          `px-10 py-10 ${
-            isPlaying.get()
-              ? "bg-red-500 hover:bg-red-600"
-              : "bg-green-500 hover:bg-green-600"
-          } text-white rounded transition-colors flex items-center gap-2`
-        }
       >
-        <Memo>
-          {() => {
-            return isPlaying.get() ? <>⏸ Pause</> : <>▶ Play</>;
-          }}
-        </Memo>
-      </Reactive.button>
+        <Reactive.button
+          onClick={handlePlayPause}
+          $disabled={() => isSystemLoading.get()}
+          $className={() =>
+            `px-10 py-10 ${
+              isSystemLoading.get()
+                ? "bg-gray-400 cursor-not-allowed"
+                : isPlaying.get()
+                ? "bg-red-500 hover:bg-red-600"
+                : "bg-green-500 hover:bg-green-600"
+            } text-white rounded transition-colors flex items-center gap-2`
+          }
+        >
+          <Memo>
+            {() => {
+              if (isSystemLoading.get()) {
+                return <>⏳ Loading...</>;
+              }
+              return isPlaying.get() ? <>⏸ Pause</> : <>▶ Play</>;
+            }}
+          </Memo>
+        </Reactive.button>
+
+        {[0.5, 1, 2, 4].map((speed) => (
+          <Reactive.button
+            key={speed}
+            onClick={() => handleSpeedChange(speed)}
+            $className={() =>
+              `px-2 py-1 text-sm rounded ${
+                PlaybackSpeed.get() === speed
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              } transition-colors`
+            }
+          >
+            {speed}x
+          </Reactive.button>
+        ))}
+
+        <Show if={() => isSystemLoading.get()}>
+          {() => (
+            <div style={{ fontSize: "14px", color: "#666" }}>
+              Loading cameras: {Array.from(loadingCameras.get()).join(", ")}
+            </div>
+          )}
+        </Show>
+      </div>
+
       <div ref={timelineRef} style={{ height: "200px", width: "100%" }} />
     </div>
   );
@@ -378,66 +480,143 @@ export default function VIS3() {
 const recordingsData = {
   "camera 1": [
     {
-      Path: "/static_server/recorder/assets/splits/1.mp4",
-      Duration: 29.895,
-      StartTime: "2025-07-31T12:17:18+05:30",
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-06/2025-08-06-15-59-36-24.mp4",
+      Duration: 60.17900085449219,
+      StartTime: "2025-08-06T15:59:36+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/2.mp4",
-      Duration: 31.835,
-      StartTime: "2025-07-31T12:18:20+05:30",
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-06/2025-08-06-16-00-37-25.mp4",
+      Duration: 60.875,
+      StartTime: "2025-08-06T16:00:37+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/3.mp4",
-      Duration: 30.348,
-      StartTime: "2025-07-28T12:23:05+05:30",
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-06/2025-08-06-16-01-37-26.mp4",
+      Duration: 60.459999084472656,
+      StartTime: "2025-08-06T16:01:37+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/4.mp4",
-      Duration: 39.915,
-      StartTime: "2025-07-28T12:24:05+05:30",
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-06/2025-08-06-16-02-38-27.mp4",
+      Duration: 60.11000061035156,
+      StartTime: "2025-08-06T16:02:38+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/5.mp4",
-      Duration: 24.79,
-      StartTime: "2025-07-28T12:25:07+05:30",
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-06/2025-08-06-16-03-38-28.mp4",
+      Duration: 60.49599838256836,
+      StartTime: "2025-08-06T16:03:38+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/6.mp4",
-      Duration: 30.47,
-      StartTime: "2025-07-28T12:26:09+05:30",
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-06/2025-08-06-16-04-38-29.mp4",
+      Duration: 60.4640007019043,
+      StartTime: "2025-08-06T16:04:38+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affc4bf53fcbc23e1c5e/2025-08-06/2025-08-06-16-05-39-30.mp4",
+      Duration: 60.19300079345703,
+      StartTime: "2025-08-06T16:05:39+05:30",
     },
   ],
   "camera 2": [
     {
-      Path: "/static_server/recorder/assets/splits/7.mp4",
-      Duration: 33.88,
-      StartTime: "2025-07-28T12:21:23+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-15-58-48-23.mp4",
+      Duration: 60.13600158691406,
+      StartTime: "2025-08-06T15:58:48+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/8.mp4",
-      Duration: 21.85,
-      StartTime: "2025-07-28T12:22:27+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-15-59-48-24.mp4",
+      Duration: 60.17300033569336,
+      StartTime: "2025-08-06T15:59:48+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/9.mp4",
-      Duration: 21.618,
-      StartTime: "2025-07-28T12:23:31+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-16-00-48-25.mp4",
+      Duration: 60.13100051879883,
+      StartTime: "2025-08-06T16:00:48+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/10.mp4",
-      Duration: 25.101,
-      StartTime: "2025-07-28T12:24:35+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-16-01-48-26.mp4",
+      Duration: 62.07099914550781,
+      StartTime: "2025-08-06T16:01:48+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/11.mp4",
-      Duration: 15.743,
-      StartTime: "2025-07-28T12:25:39+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-16-02-50-27.mp4",
+      Duration: 62.055999755859375,
+      StartTime: "2025-08-06T16:02:50+05:30",
     },
     {
-      Path: "/static_server/recorder/assets/splits/12.mp4",
-      Duration: 10.844,
-      StartTime: "2025-07-28T12:26:43+05:30",
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-16-03-52-28.mp4",
+      Duration: 62.07400131225586,
+      StartTime: "2025-08-06T16:03:52+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-16-04-54-29.mp4",
+      Duration: 60.19300079345703,
+      StartTime: "2025-08-06T16:04:54+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-16-05-54-30.mp4",
+      Duration: 62.04999923706055,
+      StartTime: "2025-08-06T16:05:54+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/6890affd4bf53fcbc23e1c5f/2025-08-06/2025-08-06-16-06-56-31.mp4",
+      Duration: 62.020999908447266,
+      StartTime: "2025-08-06T16:06:56+05:30",
+    },
+  ],
+  "camera 3": [
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-17-59-40-26.mp4",
+      Duration: 61,
+      StartTime: "2025-08-06T17:59:40+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-00-41-27.mp4",
+      Duration: 64.14900207519531,
+      StartTime: "2025-08-06T18:00:41+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-01-45-28.mp4",
+      Duration: 68.58999633789062,
+      StartTime: "2025-08-06T18:01:45+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-02-53-29.mp4",
+      Duration: 60.33399963378906,
+      StartTime: "2025-08-06T18:02:53+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-03-54-30.mp4",
+      Duration: 68.9000015258789,
+      StartTime: "2025-08-06T18:03:54+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-05-03-31.mp4",
+      Duration: 66.80000305175781,
+      StartTime: "2025-08-06T18:05:03+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-06-10-32.mp4",
+      Duration: 60.20000076293945,
+      StartTime: "2025-08-06T18:06:10+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-07-10-33.mp4",
+      Duration: 63.96699905395508,
+      StartTime: "2025-08-06T18:07:10+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-08-14-34.mp4",
+      Duration: 61.30099868774414,
+      StartTime: "2025-08-06T18:08:14+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-09-15-35.mp4",
+      Duration: 60.33300018310547,
+      StartTime: "2025-08-06T18:09:15+05:30",
+    },
+    {
+      Path: "/static_server/recorder/recordings/689343ff4bf53fcbc23e1c62/2025-08-06/2025-08-06-18-10-16-36.mp4",
+      Duration: 69.93399810791016,
+      StartTime: "2025-08-06T18:10:16+05:30",
     },
   ],
 };
