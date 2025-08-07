@@ -116,26 +116,67 @@ export default function VISVideo2({
     const activeVideo = getVideoRef(activeIndex);
     const inactiveVideo = getVideoRef(activeIndex === 0 ? 1 : 0);
 
-    if (activeVideo) activeVideo.style.zIndex = "2";
+    if (activeVideo) {
+      activeVideo.playbackRate = PlaybackSpeed.get();
+      activeVideo.style.zIndex = "2";
+    }
     if (inactiveVideo) inactiveVideo.style.zIndex = "1";
   };
 
   const loadVideoToRef = async (recording, videoRef, recordingIndex) => {
-    if (!videoRef) return false;
+    console.log("🔄 loadVideoToRef called");
+
+    if (!videoRef) {
+      console.error("❌ Video ref is null");
+      return false;
+    }
 
     try {
       const videoKey = `${cameraName.get()}_${recordingIndex}`;
+      console.log(`📥 Fetching video: ${videoKey}`);
+
       const blobUrl = await fetchVideo(
         `${HOST_URL}${recording.Path}`,
         videoKey
       );
 
+      if (!blobUrl) {
+        console.error("❌ Failed to get blob URL");
+        return false;
+      }
+
       videoRef.src = blobUrl;
-      videoRef.load();
-      console.log("Loaded");
-      return true;
+
+      // Return a promise that resolves when load() completes
+      return new Promise((resolve) => {
+        const handleLoadStart = () => {
+          console.log("📼 Video load started");
+          videoRef.removeEventListener("loadstart", handleLoadStart);
+        };
+
+        const handleLoadedData = () => {
+          console.log("✅ Video loaded data");
+          videoRef.removeEventListener("loadeddata", handleLoadedData);
+          videoRef.removeEventListener("error", handleError);
+          resolve(true);
+        };
+
+        const handleError = (e) => {
+          console.error("❌ Video load error:", e);
+          videoRef.removeEventListener("loadeddata", handleLoadedData);
+          videoRef.removeEventListener("error", handleError);
+          resolve(false);
+        };
+
+        videoRef.addEventListener("loadstart", handleLoadStart);
+        videoRef.addEventListener("loadeddata", handleLoadedData);
+        videoRef.addEventListener("error", handleError);
+
+        // Trigger the load
+        videoRef.load();
+      });
     } catch (error) {
-      console.error("Failed to load video:", error);
+      console.error("❌ Failed to load video:", error);
       return false;
     }
   };
@@ -206,6 +247,12 @@ export default function VISVideo2({
       return;
     }
 
+    console.log(
+      `🎯 Seeking ${cameraName.get()} to:`,
+      activeInfo.videoTime,
+      "seconds"
+    );
+
     // Dispatch loading started event for timeline coordination
     const loadingStartEvent = new CustomEvent("videoLoadingStart", {
       detail: { cameraName: cameraName.get() },
@@ -214,35 +261,76 @@ export default function VISVideo2({
 
     isLoading.set(true);
 
-    const currentVideoIndex = 0; // Always start with video1 for seeking
-    const inactiveVideoIndex = 1; // video2 will be inactive
-    const inactiveVideoRef = getVideoRef(inactiveVideoIndex);
-    if (inactiveVideoRef) {
-      console.log(inactiveVideoRef);
-      inactiveVideoRef.style.opacity = "0";
-    }
-
-    CurrentVideo.set(activeInfo);
-
-    onload && (await sleep(10));
     try {
-      // Load current video
-      const currentVideoIndex = 0; // Always start with video1 for seeking
-      const currentVideoRef = getVideoRef(currentVideoIndex);
-      console.log("here", currentVideoRef);
+      CurrentVideo.set(activeInfo);
 
-      // setTimeout(() => {
-      //   const currentVideoRef2 = getVideoRef(currentVideoIndex);
-      //   console.log(currentVideoRef2);
-      // }, 100);
-      await loadVideoToRef(
+      const currentVideoIndex = 0; // Always start with video1 for seeking
+      const inactiveVideoIndex = 1; // video2 will be inactive
+
+      // // Wait a bit to ensure refs are available
+      onload && (await sleep(100));
+
+      const currentVideoRef = getVideoRef(currentVideoIndex);
+      const inactiveVideoRef = getVideoRef(inactiveVideoIndex);
+
+      // Check if video ref is available
+      if (!currentVideoRef) {
+        throw new Error(`Video ref ${currentVideoIndex} not available`);
+      }
+
+      // Hide inactive video during loading
+      if (inactiveVideoRef) {
+        inactiveVideoRef.style.opacity = "0";
+      }
+
+      // // Small delay for initial load
+      // if (onload) {
+      //   await sleep(50);
+      // }
+
+      console.log(`📦 Loading video for ${cameraName.get()}...`);
+
+      // Load current video with error handling
+      const loadSuccess = await loadVideoToRef(
         activeInfo.recording,
         currentVideoRef,
         activeInfo.recordingIndex
       );
 
+      if (!loadSuccess) {
+        throw new Error("Failed to load video");
+      }
+
+      // Wait for video to be ready with a simpler approach
+      let retries = 0;
+      const maxRetries = 50; // 5 seconds max wait
+
+      while (retries < maxRetries) {
+        if (currentVideoRef.readyState >= 2) {
+          // HAVE_CURRENT_DATA or higher
+          break;
+        }
+        await sleep(100);
+        retries++;
+      }
+
+      if (retries >= maxRetries) {
+        throw new Error("Video failed to load within timeout");
+      }
+
       // Set video time
       currentVideoRef.currentTime = activeInfo.videoTime;
+      console.log(`⏰ Set video time to ${activeInfo.videoTime} seconds`);
+
+      // Wait for seek to complete
+      let seekRetries = 0;
+      while (
+        seekRetries < 20 &&
+        Math.abs(currentVideoRef.currentTime - activeInfo.videoTime) > 0.5
+      ) {
+        await sleep(50);
+        seekRetries++;
+      }
 
       // Update buffer state
       videoBuffer.set({
@@ -255,29 +343,38 @@ export default function VISVideo2({
       // Set z-index
       setVideoZIndex(currentVideoIndex);
 
-      // Preload next video if available
+      // Preload next video if available (don't wait for it)
       if (activeInfo.nextRecording) {
-        preloadNextVideo(activeInfo.recordingIndex);
+        setTimeout(() => {
+          preloadNextVideo(activeInfo.recordingIndex);
+        }, 500);
       }
+
+      console.log(`✅ Video loaded successfully for ${cameraName.get()}`);
     } catch (error) {
-      console.error("Error during seek:", error);
+      console.error(`❌ Error during seek for ${cameraName.get()}:`, error);
+      // Set a fallback state
+      CurrentVideo.set(null);
     } finally {
       isLoading.set(false);
 
       // Show inactive video again after seek is complete
-      const inactiveVideoIndex = 1;
-      const inactiveVideoRef = getVideoRef(inactiveVideoIndex);
-      if (inactiveVideoRef) {
-        setTimeout(() => {
+      setTimeout(() => {
+        const inactiveVideoRef = getVideoRef(1);
+        if (inactiveVideoRef) {
           inactiveVideoRef.style.opacity = "1";
-        }, 500);
-      }
+        }
+      }, 300);
 
       // Dispatch loading finished event
       const loadingFinishedEvent = new CustomEvent("videoLoadingFinish", {
         detail: { cameraName: cameraName.get() },
       });
       document.dispatchEvent(loadingFinishedEvent);
+
+      console.log(
+        `📤 Loading finished event dispatched for ${cameraName.get()}`
+      );
     }
   };
 
@@ -404,7 +501,7 @@ export default function VISVideo2({
                 preload="metadata"
                 ref={videoRef1}
                 className="video_item"
-                controls={false}
+                controls={true}
                 muted
                 onLoadedData={() => handleLoadedData(0)}
                 onEnded={() => handleEnded(0)}
@@ -422,7 +519,7 @@ export default function VISVideo2({
                 preload="metadata"
                 ref={videoRef2}
                 className="video_item"
-                controls={false}
+                controls={true}
                 muted
                 onLoadedData={() => handleLoadedData(1)}
                 onEnded={() => handleEnded(1)}

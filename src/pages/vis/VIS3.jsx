@@ -15,12 +15,20 @@ import "vis-timeline/styles/vis-timeline-graph2d.css";
 import VISVideo2 from "./VISVideo2";
 const HOST_URL = "http://192.168.1.121:8000";
 import "./vis.scss";
+import cloneDeep from "lodash.clonedeep";
 
 export default function VIS3() {
   const animationRef = useRef(null);
   const timelineRef = useRef(null);
   const timeline = useRef(null);
   const animationId = useRef(null);
+  const wasPlayingRef = useRef(false);
+  const mouseInteractionRef = useRef({
+    isMouseDown: false,
+    mouseDownTime: 0,
+    isDragging: false,
+    dragThreshold: 1500, // 1500ms threshold
+  });
 
   const timelineData = useRef({
     items: [],
@@ -148,6 +156,13 @@ export default function VIS3() {
   };
 
   const onTimelineClick = (timelineProperties) => {
+    if (mouseInteractionRef.current.isDragging) {
+      console.log("🚫 Click ignored - was a drag operation");
+      // Reset the dragging state
+      mouseInteractionRef.current.isDragging = false;
+      return;
+    }
+
     console.log("🖱️ Timeline clicked during playback:", isPlaying.get());
 
     // Don't allow timeline interaction during loading
@@ -165,33 +180,74 @@ export default function VIS3() {
     const snappedTime = new Date(Math.round(_time / 500) * 500);
     console.log("📍 Setting time to:", snappedTime.toISOString());
 
-    // Invalidate any running animation immediately
-    animationId.current = null;
-    console.log("🛑 Invalidated animation ID");
-
-    // Pause playback immediately to prevent time updates during loading
+    // Store the current playing state
     const wasPlaying = isPlaying.get();
+    wasPlayingRef.current = wasPlaying;
+
+    // Stop current animation cleanly
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+
+    // Clear animation ID
+    animationId.current = null;
+
+    // Pause playback immediately
     if (wasPlaying) {
       isPlaying.set(false);
     }
 
+    // Set the new time
     timeline.current.setCustomTime(snappedTime, "playback");
     CurrentTime.set(snappedTime);
 
-    // Create a custom event with optional data
+    // Dispatch timeline clicked event
     const myEvent = new CustomEvent("timelineClicked", {
       detail: snappedTime,
     });
     document.dispatchEvent(myEvent);
 
-    // Store the playing state to resume after loading if needed
-    if (wasPlaying) {
-      // Will be resumed by loading finish handler
-      setTimeout(() => {
-        if (!isSystemLoading.get()) {
-          isPlaying.set(true);
-        }
-      }, 100);
+    // Don't try to resume here - let the loading system handle it
+    console.log("⏳ Waiting for loading system to handle resume...");
+  };
+
+  // Mouse down handler
+  const handleTimelineMouseDown = () => {
+    console.log("🖱️ Timeline mouseDown");
+    mouseInteractionRef.current.isMouseDown = true;
+    mouseInteractionRef.current.mouseDownTime = Date.now();
+    mouseInteractionRef.current.isDragging = false;
+  };
+
+  // Mouse up handler
+  const handleTimelineMouseUp = () => {
+    const holdTime = Date.now() - mouseInteractionRef.current.mouseDownTime;
+    console.log(`🖱️ Timeline mouseUp - Hold time: ${holdTime}ms`);
+
+    // If held for more than threshold, mark as dragging
+    if (
+      mouseInteractionRef.current.isMouseDown &&
+      holdTime > mouseInteractionRef.current.dragThreshold
+    ) {
+      console.log("🔄 Long hold detected - marking as drag");
+      mouseInteractionRef.current.isDragging = true;
+    }
+
+    mouseInteractionRef.current.isMouseDown = false;
+  };
+
+  // Optional: Handle mouse move to detect dragging by movement
+  const handleTimelineMouseMove = () => {
+    // If mouse is down and we're moving, we might be dragging
+    if (mouseInteractionRef.current.isMouseDown) {
+      const holdTime = Date.now() - mouseInteractionRef.current.mouseDownTime;
+
+      // If we've been holding and moving for a while, consider it dragging
+      if (holdTime > 200) {
+        // 200ms threshold for movement-based dragging
+        mouseInteractionRef.current.isDragging = true;
+      }
     }
   };
 
@@ -237,6 +293,10 @@ export default function VIS3() {
     }
 
     timeline.current.on("click", onTimelineClick);
+
+    timeline.current.on("mouseDown", handleTimelineMouseDown);
+    timeline.current.on("mouseUp", handleTimelineMouseUp);
+    timeline.current.on("mouseMove", handleTimelineMouseMove);
 
     return () => {
       if (timeline.current) timeline.current.destroy();
@@ -309,18 +369,26 @@ export default function VIS3() {
 
   // Handle play/pause state changes
   useObserve(() => {
-    if (
-      isPlaying.get() &&
-      CurrentTime.get() &&
-      timelineData.current.startTime &&
-      timelineData.current.endTime &&
-      !isSystemLoading.get() // Don't start if loading
-    ) {
-      // console.log("▶️ Play button pressed - starting animation");
+    const playing = isPlaying.get();
+    const loading = isSystemLoading.get();
+    const hasTime = CurrentTime.get();
+    const hasTimelineData =
+      timelineData.current.startTime && timelineData.current.endTime;
+
+    // console.log("🎬 Play state observer:", {
+    //   playing,
+    //   loading,
+    //   hasTime: !!hasTime,
+    //   hasTimelineData,
+    // });
+
+    if (playing && hasTime && hasTimelineData && !loading) {
+      // console.log("▶️ Starting animation - all conditions met");
       startAnimation();
     } else {
+      // Stop animation if conditions aren't met
       if (animationRef.current) {
-        console.log("⏸️ Stopping animation");
+        console.log("⏸️ Stopping animation - conditions not met");
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
@@ -356,6 +424,17 @@ export default function VIS3() {
       if (loadingCameras.get().size === 0) {
         console.log("✅ All cameras finished loading");
         isSystemLoading.set(false);
+
+        // Resume playback if it was playing before
+        if (wasPlayingRef.current) {
+          console.log("🔄 Resuming playback after loading...");
+          // Small delay to ensure all videos are ready
+          setTimeout(() => {
+            if (!isSystemLoading.get()) {
+              isPlaying.set(true);
+            }
+          }, 200); // Increased delay for slow networks
+        }
       }
     };
 
@@ -375,19 +454,19 @@ export default function VIS3() {
   }, []);
 
   // Resume playback when loading finishes (if was playing before)
-  useObserve(() => {
-    const loading = isSystemLoading.get();
-    const playing = isPlaying.get();
+  // useObserve(() => {
+  //   const loading = isSystemLoading.get();
+  //   const playing = isPlaying.get();
 
-    if (!loading && playing) {
-      // Small delay to ensure videos are ready
-      setTimeout(() => {
-        if (isPlaying.get() && !isSystemLoading.get()) {
-          startAnimation();
-        }
-      }, 100);
-    }
-  });
+  //   if (!loading && playing) {
+  //     // Small delay to ensure videos are ready
+  //     setTimeout(() => {
+  //       if (isPlaying.get() && !isSystemLoading.get()) {
+  //         startAnimation();
+  //       }
+  //     }, 100);
+  //   }
+  // });
 
   return (
     <div className="vis_container">
