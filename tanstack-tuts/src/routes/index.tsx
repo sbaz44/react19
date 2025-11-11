@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import Header from '../components/Header'
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -6,8 +7,8 @@ export const Route = createFileRoute('/')({
 
 function Index() {
   return (
-    <div className="p-2">
-      <h3>Welcome Home!</h3>
+    <div className="hom_page_container">
+      <Header message='shahbaaz' />
     </div>
   )
 }

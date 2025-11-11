@@ -1,0 +1,8 @@
+.header_container {
+  display: flex;
+  justify-content: space-between;
+  padding: 48px 32px;
+  .search_input {
+    margin-left: 16px;
+  }
+}

@@ -1,0 +1,60 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: Inter;
+}
+body {
+  background-color: #1a1a1a;
+}
+a {
+  text-decoration: none;
+  color: unset;
+}
+
+.flex {
+  display: flex;
+}
+.f1 {
+  flex: 1;
+}
+.jcc {
+  justify-content: center;
+}
+
+.jcsb {
+  justify-content: space-between;
+}
+
+.jcsa {
+  justify-content: space-around;
+}
+
+.jcse {
+  justify-content: space-evenly;
+}
+.jce {
+  justify-content: end;
+}
+.aic {
+  align-items: center;
+}
+.fdc {
+  flex-direction: column;
+}
+
+.g4 {
+  gap: 4px;
+}
+.g6 {
+  gap: 6px;
+}
+.g8 {
+  gap: 8px;
+}
+.g16 {
+  gap: 16px;
+}
+.g32 {
+  gap: 16px;
+}
