@@ -1,37 +1,46 @@
-// server.js
 const express = require("express");
-const liveserverKit = require("livekit-server-sdk");
-const AccessToken = liveserverKit.AccessToken;
-require("dotenv").config();
-const createToken = async () => {
-  // If this room doesn't exist, it'll be automatically created when the first
-  // participant joins
-  const roomName = "quickstart-room";
-  // Identifier to be used for participant.
-  // It's available as LocalParticipant.identity with livekit-client SDK
-  const participantName = "quickstart-username";
+const app = express();
+const jwt = require("jsonwebtoken");
+const { isAuthenticated } = require("./helper");
+var cors = require('cors');
+app.use(express.json()); //for handling json data
+const corsOpts = {
+    origin: '*',
+    // methods: [
+    //     'GET',
+    //     'POST',
+    // ],
 
-  const at = new AccessToken(
-    process.env.LIVEKIT_API_KEY,
-    process.env.LIVEKIT_API_SECRET,
-    {
-      identity: participantName,
-      // Token to expire after 10 minutes
-      ttl: "90m",
-    }
-  );
-  at.addGrant({ roomJoin: true, room: roomName });
-
-  return await at.toJwt();
+    // allowedHeaders: [
+    //     'Content-Type',
+    // ],
 };
 
-const app = express();
-const port = 3000;
+app.use(cors(corsOpts));
 
-app.get("/getToken", async (req, res) => {
-  res.send(await createToken());
+app.listen(5000, () => {
+    console.log("Server running on port 5000");
 });
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.post("/login", (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res
+            .status(400)
+            .json({ success: false, error: "enter valid credientials" });
+    }
+    const accessToken = jwt.sign({ email: email }, "accessSecret", {
+        expiresIn: "20s",
+    });
+    const refreshToken = jwt.sign({ email: email }, "refreshSecret", {
+        expiresIn: "2m",
+    });
+    //Ps. The expiresIn time is just for testing purpose you can    change it later accordingly.
+    return res.status(200).json({ accessToken, refreshToken });
+});
+
+app.get("/protected", isAuthenticated, (req, res) => {
+    res.json({
+        success: true, msg: "Welcome user!!", email: req.email
+    });
 });

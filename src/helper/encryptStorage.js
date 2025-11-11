@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { EncryptStorage } from "encrypt-storage";
 
 // export const encryptStorage = new EncryptStorage(
@@ -17,3 +18,5 @@ export const encryptStorage = () => {
     prefix: "@PRO",
   });
 };
+
+export const queryClient = new QueryClient();
