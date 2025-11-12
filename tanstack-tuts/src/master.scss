@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz@0,14..32;1,14..32&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+
 * {
   padding: 0;
   margin: 0;
@@ -10,6 +12,24 @@ body {
 a {
   text-decoration: none;
   color: unset;
+}
+
+:root {
+  --p-primary-color: #7c3aed;
+  --p-primary-color-text: #ffffff;
+  --p-content-bg: #f8fafc;
+  --p-border-radius: 0.75rem;
+  --p-font-family: "Inter", system-ui, sans-serif;
+
+  --color-bg: #f9fafb;
+  --color-surface: #ffffff;
+  --color-text: #1f2937;
+  --color-primary: #6366f1;
+  --color-primary-hover: red;
+  --color-border: #e5e7eb;
+  --color-muted: #6b7280;
+  --color-input-bg: #ffffff;
+  --color-input-border: #d1d5db;
 }
 
 .flex {
@@ -57,4 +77,21 @@ a {
 }
 .g32 {
   gap: 16px;
+}
+
+//slider
+
+.slider_container {
+  padding: 16px;
+  img {
+    width: 100%;
+    border-radius: 8px;
+  }
+}
+
+.btn-adjust {
+  background-color: var(--color-primary);
+  &:hover {
+    background-color: blue;
+  }
 }

@@ -1,8 +1,22 @@
 .header_container {
   display: flex;
   justify-content: space-between;
-  padding: 48px 32px;
+  align-items: center;
+  padding: 48px 60px;
+  .left {
+    color: #ff004c;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .center,
+  .right {
+    color: #8b9298;
+  }
   .search_input {
-    margin-left: 16px;
+    margin-left: 32px;
+    background-color: #1f1f1f;
+    border: 0;
+    padding: 16px 8px;
   }
 }

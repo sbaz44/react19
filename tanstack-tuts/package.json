@@ -14,6 +14,7 @@
     "@tanstack/react-router": "^1.135.2",
     "@tanstack/router-plugin": "^1.135.2",
     "axios": "^1.13.2",
+    "primereact": "^10.9.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "sass": "^1.94.0"
