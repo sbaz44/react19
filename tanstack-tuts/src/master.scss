@@ -27,7 +27,7 @@ a {
   --color-surface: #ffffff;
   --color-text: #1f2937;
   --color-primary: #6366f1;
-  --color-primary-hover: red;
+  --color-primary-hover: #5658a0;
   --color-border: #e5e7eb;
   --color-muted: #6b7280;
   --color-input-bg: #ffffff;
@@ -98,37 +98,36 @@ a {
 //   }
 // }
 
-.btn-adjust {
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  text-decoration: base;
-  user-select: none;
-}
-
-/* Variants */
-.bg-primary {
-  background-color: var(--color-primary);
-}
-.bg-primary-hover {
-  background-color: var(--color-primary-hover);
-}
-.bg-secondary {
-  background-color: var(--color-muted);
-}
-.bg-danger {
-  background-color: #ef4444;
-}
-.bg-success {
-  background-color: #10b981;
-}
+// .bg-secondary {
+//   background-color: var(--color-muted);
+//   border: 1px solid var(--color-muted);
+//   &:focus {
+//     box-shadow:
+//       0 0 0 2px #1c2127,
+//       0 0 0 4px var(--color-muted),
+//       0 1px 2px 0 rgba(0, 0, 0, 0);
+//   }
+// }
+// .bg-danger {
+//   background-color: #ef4444;
+//   border: 1px solid #ef4444;
+//   &:focus {
+//     box-shadow:
+//       0 0 0 2px #1c2127,
+//       0 0 0 4px #ef4444,
+//       0 1px 2px 0 rgba(0, 0, 0, 0);
+//   }
+// }
+// .bg-success {
+//   background-color: #10b981;
+//   border: 1px solid #10b981;
+//   &:focus {
+//     box-shadow:
+//       0 0 0 2px #1c2127,
+//       0 0 0 4px #10b981,
+//       0 1px 2px 0 rgba(0, 0, 0, 0);
+//   }
+// }
 
 .text-white {
   color: white;
@@ -137,20 +136,29 @@ a {
   color: var(--color-primary);
 }
 
-.link-style {
-  background: transparent !important;
-  padding: 0 !important;
-  color: var(--color-primary);
-}
-
-.link-style:hover {
-  text-decoration: underline;
-}
-
 /* Hover states (via class) */
 .btn-adjust:hover .hover-bg-primary {
   background-color: var(--color-primary-hover);
 }
 .btn-adjust:hover .hover-bg-secondary {
   background-color: #6b7280;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  /* Change background color as desired (e.g., a lighter transparent version of the button color) */
+  background: rgba(255, 255, 255, 0.4);
+
+  /* Animation for the ripple effect */
+  animation: ripple-effect 0.6s linear;
+  z-index: 2; /* Ensure ripple is above button background but below content */
+}
+
+@keyframes ripple-effect {
+  to {
+    transform: scale(4); /* Scale up the circle */
+    opacity: 0; /* Fade out the circle */
+  }
 }

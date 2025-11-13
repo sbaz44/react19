@@ -23,7 +23,7 @@ if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <StrictMode>
-      <PrimeReactProvider value={{ unstyled: false }}>
+      <PrimeReactProvider value={{ unstyled: true }}>
         <RouterProvider router={router} />
       </PrimeReactProvider>
     </StrictMode>

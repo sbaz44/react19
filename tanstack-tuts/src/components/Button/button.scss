@@ -1,0 +1,97 @@
+.btn {
+  position: relative;
+  margin: 0;
+  display: inline-flex;
+  cursor: pointer;
+  user-select: none;
+  align-items: center;
+  vertical-align: bottom;
+  text-align: center;
+  overflow: hidden;
+  background: var(--color-primary);
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--color-primary);
+  font-size: 1rem;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+  border-radius: 6px;
+  gap: 0.5rem;
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  &:hover {
+    &::after {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+  &:focus {
+    box-shadow:
+      0 0 0 2px #1c2127,
+      0 0 0 4px var(--color-primary),
+      0 1px 2px 0 rgba(0, 0, 0, 0);
+  }
+  .btn-label {
+    user-select: none;
+    color: #fff;
+  }
+  .btn-badge {
+    background-color: red;
+    border-radius: 1000px;
+    width: 1rem;
+    height: 1rem;
+    display: grid;
+    place-content: center;
+    font-size: 12px;
+  }
+}
+.btn-link-style {
+  background: transparent !important;
+  padding: 0;
+  padding: 8px 16px !important;
+  color: var(--color-primary);
+  border-color: transparent !important;
+  &:hover {
+    text-decoration: underline;
+    &::after {
+      background-color: transparent;
+    }
+  }
+  &[disabled]:hover,
+  &:disabled:hover {
+    text-decoration: none;
+    cursor: not-allowed;
+  }
+}
+
+$severity-colors: (
+  // Use a string for the CSS variable
+  "secondary": var(--color-muted),
+  "danger": #ef4444,
+  "success": #10b981
+);
+
+// 2. Loop through the map and apply the styles
+@each $severity, $color in $severity-colors {
+  // Use interpolation to create the class name (e.g., .bg-danger)
+  .bg-#{$severity} {
+    background-color: $color;
+    border: 1px solid $color;
+
+    &:focus {
+      box-shadow:
+        0 0 0 2px #1c2127,
+        0 0 0 4px $color,
+        0 1px 2px 0 rgba(0, 0, 0, 0);
+    }
+  }
+}
