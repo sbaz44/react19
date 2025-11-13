@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Header from "../components/Header";
 import Slider from "../components/Slider";
-import { Dropdown } from "primereact/dropdown";
 import { useState } from "react";
 import { FloatLabel } from "primereact/floatlabel";
 import { Calendar } from "primereact/calendar";
@@ -9,6 +8,7 @@ import { InputText } from "primereact/inputtext";
 import { MultiSelect } from "primereact/multiselect";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import Button, { LoadingIcon } from "../components/Button/Button";
+import Dropdown from "../components/Dropdown.tsx/Dropdown";
 export const Route = createFileRoute("/")({
   component: Index,
 });
@@ -38,11 +38,14 @@ function Index() {
         options={cities}
         optionLabel="name"
         placeholder="Select a City"
-        className="w-full md:w-14rem"
+        // className="w-full md:w-14rem"
         showClear
+        editable
+        loading
+        // showFilterClear
       />
-      <Calendar value={date} /> <InputText value={date} />
-      <MultiSelect
+      {/* <Calendar value={date} /> <InputText value={date} /> */}
+      {/* <MultiSelect
         value={cities}
         onChange={(e) => setSelectedCity(e.value)}
         options={cities}
@@ -50,8 +53,8 @@ function Index() {
         placeholder="Select Cities"
         maxSelectedLabels={3}
         className="w-full md:w-20rem"
-      />
-      <Accordion activeIndex={0}>
+      /> */}
+      {/* <Accordion activeIndex={0}>
         <AccordionTab header="Header I">
           <p className="m-0">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
@@ -85,11 +88,11 @@ function Index() {
             eligendi optio cumque nihil impedit quo minus.
           </p>
         </AccordionTab>
-      </Accordion>
+      </Accordion> */}
       <Button
         aria-label="Filter"
         label="Submit"
-        // loading
+        loading
         // raised
         // badge="2"
         // outlined

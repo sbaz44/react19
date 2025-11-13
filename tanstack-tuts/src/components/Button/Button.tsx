@@ -2,121 +2,99 @@ import { useCallback } from "react";
 import "./button.scss";
 import { Button as PrimeButton } from "primereact/button";
 
-type PrimeButtonNativeProps = React.ComponentProps<typeof PrimeButton>;
-type CustomButtonProps = {
+type PrimeButtonProps = React.ComponentProps<typeof PrimeButton>;
+
+interface ButtonProps extends PrimeButtonProps {
+  // You can override or extend here if needed
   label?: string;
-  badge?: string | undefined;
-  className?: string | undefined;
-  loading?: boolean | undefined;
-  link?: boolean | undefined;
-  outlined?: boolean | undefined;
-  icon?: any;
-  rounded?: boolean | undefined;
-  raised?: boolean | undefined;
-  children?: React.ReactNode | undefined;
-};
-
-type ButtonProps = CustomButtonProps & PrimeButtonNativeProps;
-
-function createRipple(event: React.MouseEvent<HTMLButtonElement>) {
-  const button = event.currentTarget;
-
-  if (button.disabled) return;
-
-  const circle = document.createElement("span");
-  const diameter = Math.max(button.clientWidth, button.clientHeight);
-  const radius = diameter / 2;
-
-  circle.style.width = circle.style.height = `${diameter}px`;
-
-  const rect = button.getBoundingClientRect();
-  circle.style.left = `${event.clientX - rect.left - radius}px`;
-  circle.style.top = `${event.clientY - rect.top - radius}px`;
-  circle.classList.add("ripple");
-
-  const existingRipple = button.querySelector(".ripple");
-  if (existingRipple) {
-    existingRipple.remove();
-  }
-  button.appendChild(circle);
-  setTimeout(() => {
-    circle.remove();
-  }, 600);
+  badge?: string;
+  loading?: boolean;
+  link?: boolean;
+  outlined?: boolean;
+  raised?: boolean;
+  rounded?: boolean;
+  children?: React.ReactNode;
 }
 
-const Button = (props: ButtonProps) => {
-  const { onClick, ...restProps } = props;
-  const handleClick = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      createRipple(event);
-      if (onClick) {
-        onClick(event as any);
-      }
-    },
-    [onClick]
-  );
-  console.log(restProps);
-  return <PrimeButton pt={ButtonPT} {...restProps} onClick={handleClick} />;
-};
+function createRipple(e: React.MouseEvent<HTMLButtonElement>) {
+  const btn = e.currentTarget;
+  if (btn.hasAttribute("disabled")) return;
 
-export default Button;
+  const ripple = document.createElement("span");
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = e.clientX - rect.left - size / 2;
+  const y = e.clientY - rect.top - size / 2;
 
-const ButtonPT: any = {
-  // button: {
-  root: ({ props }: { props: any }) => {
-    console.log({ props });
-    const classes = ["btn"];
-    props.className && classes.push(props.className);
-    // Link style
-    if (props.link) {
-      classes.push("btn-link-style");
-    }
+  ripple.className = "ripple";
+  ripple.style.width = ripple.style.height = `${size}px`;
+  ripple.style.left = `${x}px`;
+  ripple.style.top = `${y}px`;
+
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+
+const ButtonPT = {
+  root: ({ props }: { props: ButtonProps }) => {
+    const classes = ["btn", props.className].filter(Boolean);
+
+    // Variant styles
+    if (props.link) classes.push("btn-link");
+    if (props.outlined) classes.push("btn-outlined");
+    if (props.raised) classes.push("btn-raised");
+    if (props.rounded) classes.push("btn-rounded");
 
     // Severity
-    if (props.severity === "secondary") {
-      classes.push("bg-secondary");
-    } else if (props.severity === "danger") {
-      classes.push("bg-danger");
-    } else if (props.severity === "success") {
-      classes.push("bg-success");
+    if (props.severity && !props.link && !props.outlined) {
+      classes.push(`btn-${props.severity}`);
     }
+
     return {
       className: classes.join(" "),
       style: {
-        opacity: props.disabled || props.loading ? 0.7 : 1,
+        position: "relative",
+        overflow: "hidden",
+        opacity: props.disabled || props.loading ? 0.65 : 1,
         cursor: props.disabled || props.loading ? "not-allowed" : "pointer",
-        borderRadius: props.rounded ? "1000px" : null,
-        boxShadow: props.raised
-          ? "0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12)"
-          : null,
-        backgroundColor: props.raised || props.outlined ? "transparent" : null,
-        borderColor: props.raised ? "transparent" : null,
-      },
+      } as React.CSSProperties,
     };
   },
 
-  // Optional: Wrap label in span for hover targeting
-  label: ({ props }: { props: any }) => {
-    return {
-      style: {
-        display: !props.label || props.loading ? "none" : null,
-      },
-      className: "btn-label",
-    };
+  label: {
+    className: "btn-label",
+    style: ({ props }: { props: ButtonProps }) => ({
+      display: props.loading && !props.label ? "none" : "inline",
+    }),
   },
-  icon: {
-    className: "icon123",
-  },
-  loadingIcon: {
-    className: "btn-loading-icon",
-  },
-  badge: {
-    className: "btn-badge",
-  },
-  // Optional: Hover background via child
-  // Not needed if using CSS parent selector
-  // },
+
+  icon: { className: "btn-icon" },
+  loadingIcon: { className: "btn-loading-icon pi pi-spinner pi-spin" },
+  badge: { className: "btn-badge" },
 };
+
+const Button = (props: ButtonProps) => {
+  const { onClick, ...rest } = props;
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      createRipple(e);
+      onClick?.(e);
+    },
+    [onClick]
+  );
+
+  return (
+    <PrimeButton
+      pt={ButtonPT}
+      {...rest}
+      loadingIcon={<LoadingIcon width={24} height={24} />}
+      onClick={handleClick}
+    />
+  );
+};
+
+export default Button;
 
 export const LoadingIcon = (props: any) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" {...props}>

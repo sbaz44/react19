@@ -32,6 +32,18 @@ a {
   --color-muted: #6b7280;
   --color-input-bg: #ffffff;
   --color-input-border: #d1d5db;
+
+  //dd
+
+  --dropdown-bg: #ffffff;
+  --dropdown-border: #d1d5db;
+  --dropdown-text: #1f2937;
+  --dropdown-placeholder: #9ca3af;
+  --dropdown-hover-bg: #f3f4f6;
+  --dropdown-focus-border: #6366f1;
+  --dropdown-invalid-border: #ef4444;
+  --dropdown-panel-bg: #ffffff;
+  --dropdown-panel-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .flex {
