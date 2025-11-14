@@ -44,6 +44,16 @@ a {
   --dropdown-invalid-border: #ef4444;
   --dropdown-panel-bg: #ffffff;
   --dropdown-panel-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  //multiselect
+
+  --ms-bg: #ffffff;
+  --ms-border: #d1d5db;
+  --ms-text: #1f2937;
+  --ms-chip-bg: #e0e7ff;
+  --ms-chip-text: #4338ca;
+  --ms-focus: #6366f1;
+  --ms-hover: #f3f4f6;
 }
 
 .flex {

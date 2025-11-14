@@ -1,0 +1,359 @@
+/* components/MultiSelect.scss */
+
+// :root {
+//   --ms-bg: #ffffff;
+//   --ms-border: #d1d5db;
+//   --ms-text: #1f2937;
+//   --ms-chip-bg: #e0e7ff;
+//   --ms-chip-text: #4338ca;
+//   --ms-focus: #6366f1;
+//   --ms-hover: #f3f4f6;
+// }
+
+// @media (prefers-color-scheme: dark) {
+//   :root {
+//     --ms-bg: #1f2937;
+//     --ms-border: #374151;
+//     --ms-text: #e5e7eb;
+//     --ms-chip-bg: #3730a3;
+//     --ms-chip-text: #c7d2fe;
+//     --ms-focus: #818cf8;
+//     --ms-hover: #374151;
+//   }
+// }
+
+.ms-root {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  justify-content: space-between;
+  gap: 8px;
+  background-color: var(--dropdown-bg);
+  align-items: center;
+  border: 1px solid transparent;
+  width: 100%;
+  &:hover {
+    border: 1px solid var(--color-primary);
+  }
+  &:focus-within {
+    border-color: var(--ms-focus);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+  .ms-label-container {
+    width: 100%;
+    .ms-label {
+      display: block;
+      white-space: nowrap;
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0.75rem 0.75rem;
+      padding-right: 1rem;
+      transition:
+        background-color 0.2s,
+        color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s;
+    }
+  }
+  [data-pc-section="trigger"] {
+    display: grid;
+    place-content: center;
+    align-self: stretch;
+    width: 3rem;
+  }
+  .ms-clear-icon {
+    right: 2.7rem;
+  }
+}
+
+.ms-input {
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+  color: var(--ms-text);
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ms-chip {
+  background: var(--ms-chip-bg);
+  color: var(--ms-chip-text);
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ms-chip-remove {
+  cursor: pointer;
+  font-size: 1.1em;
+  opacity: 0.7;
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.ms-icon,
+.ms-clear-icon,
+.ms-loading-icon {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  color: var(--ms-text);
+  opacity: 0.7;
+}
+
+.ms-panel {
+  background: var(--ms-bg);
+  border: 1px solid var(--ms-border);
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 0.25rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  .ms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #374151;
+    background: #f9fafb;
+    margin: 0;
+    border-top-right-radius: 6px;
+    border-top-left-radius: 6px;
+    [data-pc-section="headercheckboxcontainer"] {
+      margin-right: 0.5rem;
+      [data-pc-name="checkbox"] {
+        width: 22px;
+        height: 22px;
+        background-color: red;
+        position: relative;
+        display: inline-flex;
+        user-select: none;
+        border-radius: 6px;
+        vertical-align: bottom;
+        input {
+          appearance: none;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          padding: 0;
+          margin: 0;
+          opacity: 2;
+          z-index: 1;
+          outline: 0 none;
+          cursor: pointer;
+          border: 2px solid #d1d5db;
+          border-radius: 6px;
+        }
+        [data-pc-section="box"] {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border: 2px solid #d1d5db;
+          background: #ffffff;
+          width: 22px;
+          height: 22px;
+          color: #4b5563;
+          border-radius: 6px;
+          transition:
+            background-color 0.2s,
+            color 0.2s,
+            border-color 0.2s,
+            box-shadow 0.2s;
+          outline-color: transparent;
+          svg {
+            display: inline-block;
+            color: #ffffff;
+            width: 14px;
+            height: 14px;
+          }
+        }
+        [data-p-highlight="true"] {
+          border-color: var(--color-primary) !important;
+          background: var(--color-primary) !important;
+          svg {
+            display: inline-block;
+            color: #ffffff;
+            width: 14px;
+            height: 14px;
+          }
+        }
+      }
+    }
+    [data-pc-section="filtercontainer"] {
+      position: relative;
+      flex: 1;
+      .p-multiselect-filter {
+        width: 100%;
+
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--dropdown-border);
+        border-radius: 0.25rem;
+        background: var(--dropdown-bg);
+        color: var(--dropdown-text);
+        padding-right: 3rem;
+      }
+      svg {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        right: 1rem;
+        transform: translateY(-50%);
+      }
+    }
+    .ms-close-btn {
+      background-color: transparent;
+      border: 0;
+      margin-left: 0.5rem;
+    }
+  }
+  .ms-list-items {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    padding: 0.75rem 0;
+    .ms-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.75rem 1.25rem;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      [data-pc-name="checkbox"] {
+        width: 22px;
+        height: 22px;
+        background-color: red;
+        position: relative;
+        display: inline-flex;
+        user-select: none;
+        border-radius: 6px;
+        vertical-align: bottom;
+        input {
+          appearance: none;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          padding: 0;
+          margin: 0;
+          opacity: 2;
+          z-index: 1;
+          outline: 0 none;
+          cursor: pointer;
+          border: 2px solid #d1d5db;
+          border-radius: 6px;
+        }
+        [data-pc-section="box"] {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border: 2px solid #d1d5db;
+          background: #ffffff;
+          width: 22px;
+          height: 22px;
+          color: #4b5563;
+          border-radius: 6px;
+          transition:
+            background-color 0.2s,
+            color 0.2s,
+            border-color 0.2s,
+            box-shadow 0.2s;
+          outline-color: transparent;
+          svg {
+            display: inline-block;
+            color: #ffffff;
+            width: 14px;
+            height: 14px;
+          }
+        }
+        [data-p-highlight="true"] {
+          border-color: var(--color-primary) !important;
+          background: var(--color-primary) !important;
+          svg {
+            display: inline-block;
+            color: #ffffff;
+            width: 14px;
+            height: 14px;
+          }
+        }
+      }
+
+      &:hover,
+      &.ms-item-focused {
+        background: var(--ms-hover);
+      }
+
+      //   &.ms-item-selected {
+      //     background: rgba(99, 102, 241, 0.15);
+      //     color: var(--ms-focus);
+      //     font-weight: 600;
+      //     position: relative;
+
+      //     &::before {
+      //       content: "";
+      //       position: absolute;
+      //       left: 0;
+      //       top: 4px;
+      //       bottom: 4px;
+      //       width: 4px;
+      //       background: var(--ms-focus);
+      //       border-radius: 2px;
+      //     }
+      //   }
+
+      //   &.ms-item-checkmark::after {
+      //     content: "Check";
+      //     position: absolute;
+      //     right: 0.75rem;
+      //     color: var(--ms-focus);
+      //     font-weight: bold;
+      //   }
+    }
+  }
+}
+
+.ms-filter-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--ms-border);
+  border-radius: 0.25rem;
+  background: var(--ms-bg);
+  color: var(--ms-text);
+}
+
+.ms-empty {
+  padding: 1rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+/* Ripple */
+.ms-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.3);
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}

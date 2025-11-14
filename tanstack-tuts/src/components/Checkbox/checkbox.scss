@@ -1,0 +1,214 @@
+/* components/Checkbox.scss */
+
+:root {
+  --cb-size: 1.25rem;
+  --cb-border: #d1d5db;
+  --cb-bg: #ffffff;
+  --cb-checked: #6366f1;
+  --cb-checked-hover: #4f46e5;
+  --cb-text: #1f2937;
+  --cb-disabled: #9ca3af;
+  --cb-invalid: #ef4444;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cb-border: #374151;
+    --cb-bg: #1f2937;
+    --cb-checked: #818cf8;
+    --cb-checked-hover: #6366f1;
+    --cb-text: #e5e7eb;
+    --cb-disabled: #6b7280;
+    --cb-invalid: #f87171;
+  }
+}
+
+.cb-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+  .cb-root {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border-radius: 6px;
+
+    .cb-input {
+      appearance: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      opacity: 2;
+      z-index: 1;
+      outline: 0 none;
+      cursor: pointer;
+      border: 2px solid #d1d5db;
+      border-radius: 6px;
+      &:not(:disabled):focus {
+        box-shadow:
+          0 0 0 2px #1c2127,
+          0 0 0 4px var(--color-primary),
+          0 1px 2px 0 rgba(0, 0, 0, 0);
+      }
+    }
+    .cb-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid #d1d5db;
+      background: #ffffff;
+      width: 22px;
+      height: 22px;
+      color: #4b5563;
+      border-radius: 6px;
+      transition:
+        background-color 0.2s,
+        color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s;
+      outline-color: transparent;
+    }
+    .cb-box-disabled {
+      cursor: not-allowed !important;
+    }
+  }
+  [data-p-highlight="true"] {
+    border-color: var(--color-primary) !important;
+    background: var(--color-primary) !important;
+    svg {
+      display: inline-block;
+      color: #ffffff;
+      width: 14px;
+      height: 14px;
+    }
+  }
+  .cb-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    .cb-input {
+      cursor: not-allowed;
+    }
+  }
+  .cb-invalid {
+    background: var(--cb-invalid) !important;
+  }
+}
+
+.cb-wrapper-disabled {
+  .cb-external-label {
+    cursor: not-allowed;
+  }
+}
+
+// .cb-box {
+//   width: 100%;
+//   height: 100%;
+//   border: 2px solid var(--cb-border);
+//   border-radius: 0.25rem;
+//   background: var(--cb-bg);
+//   transition: all 0.2s ease;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+
+//   .cb-icon {
+//     color: white;
+//     font-size: 0.75rem;
+//     font-weight: bold;
+//     //   opacity: 0;
+//     transition: opacity 0.2s;
+//   }
+
+//   .cb-checked & {
+//     background: var(--cb-checked);
+//     border-color: var(--cb-checked);
+//   }
+
+//   .cb-filled & {
+//     background: var(--cb-bg);
+//     border-color: var(--cb-border);
+
+//     .cb-checked & {
+//       background: var(--cb-checked);
+//       border-color: var(--cb-checked);
+//     }
+//   }
+
+//   .cb-invalid & {
+//     border-color: var(--cb-invalid);
+//   }
+
+//   .cb-box-disabled & {
+//     opacity: 0.5;
+//     cursor: not-allowed;
+//   }
+// }
+
+// .cb-input {
+//   position: absolute;
+//   opacity: 0;
+//   width: 0;
+//   height: 0;
+// }
+
+// // .cb-icon {
+// //   color: white;
+// //   font-size: 0.75rem;
+// //   font-weight: bold;
+// //   opacity: 0;
+// //   transition: opacity 0.2s;
+
+// //   .cb-checked & {
+// //     opacity: 1;
+// //   }
+// // }
+
+// .cb-label,
+// .cb-external-label {
+//   color: var(--cb-text);
+//   font-size: 1rem;
+//   cursor: pointer;
+//   transition: color 0.2s;
+
+//   .cb-disabled & {
+//     color: var(--cb-disabled);
+//     cursor: not-allowed;
+//   }
+// }
+
+// /* Hover */
+// .cb-root:hover .cb-box:not(.cb-checked):not(.cb-box-disabled) {
+//   border-color: var(--cb-checked);
+// }
+
+// .cb-root:hover .cb-box.cb-checked:not(.cb-box-disabled) {
+//   background: var(--cb-checked-hover);
+//   border-color: var(--cb-checked-hover);
+// }
+
+// /* Focus ring */
+// .cb-root:focus-within .cb-box {
+//   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+// }
+
+// /* Ripple */
+// .cb-ripple {
+//   position: absolute;
+//   border-radius: 50%;
+//   background: rgba(99, 102, 241, 0.3);
+//   transform: scale(0);
+//   animation: ripple 0.6s linear;
+//   pointer-events: none;
+// }
+
+// @keyframes ripple {
+//   to {
+//     transform: scale(4);
+//     opacity: 0;
+//   }
+// }

@@ -5,10 +5,11 @@ import { useState } from "react";
 import { FloatLabel } from "primereact/floatlabel";
 import { Calendar } from "primereact/calendar";
 import { InputText } from "primereact/inputtext";
-import { MultiSelect } from "primereact/multiselect";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import Button, { LoadingIcon } from "../components/Button/Button";
 import Dropdown from "../components/Dropdown.tsx/Dropdown";
+import MultiSelect from "../components/MultiSelect/MultiSelect";
+import Checkbox from "../components/Checkbox/Checkbox";
 export const Route = createFileRoute("/")({
   component: Index,
 });
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [selectedCity, setSelectedCity] = useState<String | null>(null);
   const [date, setDate] = useState(null);
+  const [remember, setRemember] = useState(true);
   const cities = [
     { name: "New York", code: "NY" },
     { name: "Rome", code: "RM" },
@@ -23,6 +25,7 @@ function Index() {
     { name: "Istanbul", code: "IST" },
     { name: "Paris", code: "PRS" },
   ];
+  const cities2 = ["ABNC", "ABNC2", "ABNC3", "ABNC4", "ABNC5"];
   return (
     <div className="hom_page_container">
       <Header message="shahbaaz" />
@@ -31,17 +34,36 @@ function Index() {
         
         <label htmlFor="dd-city">Select a City</label>
       </FloatLabel> */}
+      <Checkbox
+        label="Remember me"
+        // disabled
+        invalid
+        checked={remember}
+        onChange={(e) => {
+          console.log(e);
+          setRemember(e.checked);
+        }}
+        value={remember}
+      />
+      <MultiSelect
+        options={cities}
+        optionLabel="name"
+        value={selectedCity}
+        onChange={(e) => setSelectedCity(e.value)}
+        // checkmark
+      />
       <Dropdown
         filter
         value={selectedCity}
         onChange={(e) => setSelectedCity(e.value)}
-        options={cities}
+        options={cities2}
         optionLabel="name"
         placeholder="Select a City"
         // className="w-full md:w-14rem"
         showClear
-        editable
-        loading
+        // editable
+        // disabled
+        // loading
         // showFilterClear
       />
       {/* <Calendar value={date} /> <InputText value={date} /> */}
