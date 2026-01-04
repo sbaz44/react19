@@ -12,6 +12,7 @@ import VIS3 from "./pages/vis/VIS3";
 import VIS3Copy from "./pages/vis/VIS3 copy";
 import Snap from "./pages/Snap";
 import TanStackPage from "./pages/TankStackPage";
+import Timeline from "./pages/Timeline";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -27,6 +28,7 @@ export default function AppRoutes() {
       <Route path="/viscopy" element={<VIS3Copy />} />
       <Route path="/snap" element={<Snap />} />
       <Route path="/tanstack" element={<TanStackPage />} />
+      <Route path="/timeline" element={<Timeline />} />
 
       {/* <Route path="/course" element={<Courses />} />
         <Route path="/live" element={<Live />} />
