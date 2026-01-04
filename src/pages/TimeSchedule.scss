@@ -1,0 +1,261 @@
+.time-schedule {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  min-width: 600px;
+  user-select: none;
+}
+
+.schedule-header {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.date-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.timer-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.current-time-display {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2563eb;
+  font-variant-numeric: tabular-nums;
+  min-width: 140px;
+}
+
+.play-pause-btn,
+.reset-btn {
+  padding: 6px 16px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.play-pause-btn:hover,
+.reset-btn:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.schedule-container {
+  position: relative;
+  background-color: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Time indicator */
+.time-indicator {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.indicator-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #ef4444;
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.indicator-line::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #ef4444;
+}
+
+.indicator-label {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ef4444;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Sticky Headers Wrapper */
+.headers-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: white;
+  overflow: hidden;
+  border-bottom: 2px solid #d0d0d0;
+  width: 100%;
+}
+
+.headers-inner {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.date-header {
+  display: flex;
+  border-bottom: 2px solid #d0d0d0;
+  padding: 8px 0;
+  background-color: #f0f0f0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.date-header-cell {
+  display: inline-block;
+  text-align: center;
+  font-size: 14px;
+  color: #1a1a1a;
+  padding: 4px 8px;
+  flex-shrink: 0;
+  border-right: 1px solid #d0d0d0;
+}
+
+.date-header-cell:last-child {
+  border-right: none;
+}
+
+.time-header {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 8px 0;
+  background-color: #fafafa;
+  white-space: nowrap;
+}
+
+/* Scrollable content */
+.schedule-content {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.schedule-content::-webkit-scrollbar {
+  display: none;
+}
+
+.timeline-wrapper {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.time-slot {
+  display: inline-block;
+  text-align: left;
+  font-size: 13px;
+  color: #666;
+  padding: 0 3px;
+  flex-shrink: 0;
+}
+
+.schedule-rows {
+  padding: 8px 0;
+}
+
+.schedule-row {
+  display: flex;
+  height: 32px;
+  align-items: center;
+}
+
+.row-cell {
+  display: inline-block;
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+  border-left: 1px solid #d0d0d0;
+}
+
+.dotted-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    to right,
+    #d0d0d0,
+    #d0d0d0 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Cell states */
+.past-cell {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.current-cell {
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.row-cell:hover {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Edge gradients */
+.schedule-content::before,
+.schedule-content::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.schedule-content::before {
+  left: 0;
+  background: linear-gradient(to right, white, transparent);
+}
+
+.schedule-content::after {
+  right: 0;
+  background: linear-gradient(to left, white, transparent);
+}
+
+.timeline-info {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+}
